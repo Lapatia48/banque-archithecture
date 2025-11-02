@@ -1,0 +1,9 @@
+curl http://localhost:5279/solde/laplap
+
+
+curl.exe -X POST "http://localhost:5279/depot" `
+   -H "Content-Type: application/x-www-form-urlencoded" `
+   -d "identifiant=laplap&montant=999&compte=depot&action=retrait&detail=Versement%20espèces"
+
+
+curl http://localhost:5279/listOperation/laplap

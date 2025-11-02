@@ -1,0 +1,25 @@
+connexion du postgres:
+    jboss-cli.bat --connect --command="/subsystem=datasources/jdbc-driver=postgresql:add(driver-name=postgresql, driver-module-name=org.postgresql, driver-class-name=org.postgresql.Driver)"
+
+list des deplois(status) :
+    jboss-cli.bat --connect --command="deployment-info --server-group=main-server-group"
+
+compilation du projet:
+    cd L:\cours\prog\S5\banque-archithecture\java\compte-courant-ejb
+    mvn clean compile package
+
+
+depoie ejb:
+    cd C:\servers\wildfly-27.0.1.Final\bin
+    jboss-cli.bat --connect --command="deploy --force C:\servers\wildfly-27.0.1.Final\standalone\deployments\compte-courant-ejb-1.0.0.jar"
+
+
+suppr jar et copie + copie dans tomcat:
+    del C:\servers\wildfly-27.0.1.Final\standalone\deployments\compte-courant-ejb-1.0.0.jar
+    copy L:\cours\prog\S5\banque-archithecture\java\compte-courant-ejb\target\compte-courant-ejb-1.0.0.jar C:\servers\wildfly-27.0.1.Final\standalone\deployments\
+   
+    copy L:\cours\prog\S5\banque-archithecture\java\compte-courant-ejb\target\compte-courant-ejb-1.0.0.jar "C:\Program Files\Apache Software Foundation\Tomcat 11.0\lib\"
+
+undeploy ejb:
+    cd C:\servers\wildfly-27.0.1.Final\bin
+    jboss-cli.bat --connect --command="undeploy compte-courant-ejb-1.0.0.jar"

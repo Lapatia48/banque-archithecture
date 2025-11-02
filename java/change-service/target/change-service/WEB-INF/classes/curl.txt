@@ -1,0 +1,11 @@
+http://localhost:8081/change-service/api/change/devises
+
+http://localhost:8081/change-service/api/change/taux/EUR
+
+http://localhost:8081/change-service/api/change/convertir
+{
+    "devise": "EUR",
+    "montant": 100
+}
+
+http://localhost:8081/change-service/api/change/devises/EUR/valide
