@@ -139,14 +139,6 @@
             <systemPath>L:\cours\prog\S5\banque-archithecture\java\change-ejb\target\change-ejb-1.0.0.jar</systemPath>
         </dependency>
 
-        <dependency>
-            <groupId>com.banque</groupId>
-            <artifactId>virement-ejb</artifactId>
-            <version>1.0.0</version>
-            <scope>system</scope>
-            <systemPath>L:\cours\prog\S5\banque-archithecture\java\virement-ejb\target\virement-ejb-1.0.0.jar</systemPath>
-        </dependency>
-
         <!-- Ces dépendances devraient déjà être présentes -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

@@ -4,8 +4,8 @@ mvn clean compile package
 
 CMD:
 del C:\servers\wildfly-27.0.1.Final\standalone\deployments\compte-courant-ejb-1.0.0.jar
-cd C:\servers\wildfly-27.0.1.Final\bin
-standalone.bat
+    cd C:\servers\wildfly-27.0.1.Final\bin
+    standalone.bat
 
 CMD:
 cd C:\servers\wildfly-27.0.1.Final\bin

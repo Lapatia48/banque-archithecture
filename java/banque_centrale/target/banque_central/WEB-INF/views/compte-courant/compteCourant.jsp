@@ -446,6 +446,16 @@
                     </form>
                 </div>
                 
+                <!-- <div class="quick-card">
+                    <div class="quick-icon">Effectuer un virement</div>
+                    <div class="quick-description">Valider</div>
+                    <form action="${pageContext.request.contextPath}/accueil" method="get" style="margin: 0;">
+                        <button class="button button-outline" type="submit" style="width: 100%;">
+                            Accueil
+                        </button>
+                    </form>
+                </div> -->
+
                 <!-- Section virement -->
                 <div class="action-card">
                     <h3 class="section-title">Faire un virement</h3>
@@ -485,18 +495,6 @@
                         </button>
                     </form>
                 </div>
-
-                <div class="quick-card">
-                    <div class="quick-icon">📊</div>
-                    <div class="quick-title">Virements</div>
-                    <div class="quick-description">Valider, annuler ou modifier un virement</div>
-                    <form action="${pageContext.request.contextPath}/virement/list" method="get" style="margin: 0;">
-                        <button class="button button-outline" type="submit" style="width: 100%;">
-                            Voir les virements
-                        </button>
-                    </form>
-                </div>
-
             </div>
         </div>
 

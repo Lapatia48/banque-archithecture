@@ -1,6 +1,7 @@
 package compteCourant;
 
 import compteCourant.metier.CompteCourant;
+import compteCourant.metier.Virement;
 import compteCourant.metier.Operation;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
@@ -49,6 +50,26 @@ public class CompteCourantBean implements CompteCourantRemote {
         }
     }
 
+    @Override
+    public String faireDepotVirement(String identifiant, Double montant, String details) {
+        try {
+            CompteCourant compte = getCompte(identifiant)
+                .orElseThrow(() -> new RuntimeException("Compte courant non trouvé"));
+            
+            Operation operation = compte.deposer(montant, details, "virement");
+            
+            // Mettre à jour le solde en base
+            mettreAJourSolde(compte);
+            
+            // Sauvegarder l'opération
+            sauvegarderOperation(operation);
+            
+            return "Dépôt de " + montant + " réussi pour " + identifiant;
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur dépôt: " + e.getMessage());
+        }
+    }
 
     @Override
     public String faireRetrait(String identifiant, Double montant, String details) {
@@ -71,7 +92,26 @@ public class CompteCourantBean implements CompteCourantRemote {
         }
     }
 
-
+    @Override
+    public String faireRetraitVirement(String identifiant, Double montant, String details) {
+        try {
+            CompteCourant compte = getCompte(identifiant)
+                .orElseThrow(() -> new RuntimeException("Compte courant non trouvé"));
+            
+            Operation operation = compte.retirer(montant, details, "virement");
+            
+            // Mettre à jour le solde en base
+            mettreAJourSolde(compte);
+            
+            // Sauvegarder l'opération
+            sauvegarderOperation(operation);
+            
+            return "Retrait de " + montant + " réussi pour " + identifiant;
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur retrait: " + e.getMessage());
+        }
+    }
 
     @Override
     public List<Object[]> getOperations(String identifiant) {
@@ -93,7 +133,37 @@ public class CompteCourantBean implements CompteCourantRemote {
         }
     }
 
- 
+    @Override
+    public String faireVirement(String identifiantSource, String identifiantDest, Double montant, String details) {
+        try {
+            // Récupérer les comptes
+            CompteCourant compteSource = getCompte(identifiantSource)
+                .orElseThrow(() -> new RuntimeException("Compte source non trouvé"));
+            
+            CompteCourant compteDest = getCompte(identifiantDest)
+                .orElseThrow(() -> new RuntimeException("Compte destination non trouvé"));
+            
+            // Créer et exécuter le virement
+            Virement virement = new Virement(identifiantSource, identifiantDest, montant, "MGA", details);
+            virement.valider(compteSource);
+            
+            Operation[] operations = virement.executer(compteSource, compteDest);
+            
+            // Mettre à jour les soldes
+            mettreAJourSolde(compteSource);
+            mettreAJourSolde(compteDest);
+            
+            // Sauvegarder les opérations
+            sauvegarderOperation(operations[0]); // Retrait
+            sauvegarderOperation(operations[1]); // Depot
+            
+            return "Virement de " + montant + " de " + identifiantSource + " à " + identifiantDest + " réussi.";
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur virement: " + e.getMessage());
+        }
+    }
+    
     // Nouvelles méthodes orientées objet
     public Optional<CompteCourant> getCompte(String identifiant) {
         try {
@@ -120,7 +190,10 @@ public class CompteCourantBean implements CompteCourantRemote {
         }
     }
     
-
+    public Virement creerVirement(String identifiantSource, String identifiantDest, 
+                                 Double montant, String devise, String details) {
+        return new Virement(identifiantSource, identifiantDest, montant, devise, details);
+    }
     
     public List<Operation> getOperationsObjet(String identifiant) {
         try {

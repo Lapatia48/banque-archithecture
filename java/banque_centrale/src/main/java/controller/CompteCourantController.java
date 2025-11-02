@@ -10,7 +10,6 @@ import jakarta.servlet.http.HttpSession;
 
 import entity.*;
 import service.*;
-import virement.VirementRemote;
 
 import java.util.List;
 import java.util.Properties;
@@ -378,8 +377,8 @@ public class CompteCourantController {
         return compteCourant(session, model);
     }
 
-   @PostMapping("/virement-courant")
-    public String creerVirementCourant(
+    @PostMapping("/virement-courant")
+    public String faireVirementCourant(
             @RequestParam("identifiantDest") String identifiantDest,
             @RequestParam("montant") Double montant,
             @RequestParam("devise") String devise,
@@ -412,58 +411,32 @@ public class CompteCourantController {
                 sourceConversion = "WS";
             }
 
-            // Vérifier solde (en MGA) - On garde cette vérification
+            // Vérifier solde (en MGA)
             Double soldeSource = getEJB().getSolde(identifiantSource);
             if (soldeSource < montantEnAriary) {
                 model.addAttribute("error", "Solde insuffisant pour le virement de " + montant + " " + devise);
                 return compteCourant(session, model);
             }
 
-            // ✅ NOUVEAU : Créer le virement via l'EJB Virement au lieu d'exécuter immédiatement
-            String createdBy = banquierSessionService.getBanquier().getIdentifiant();
-            VirementRemote virementEjb = getVirementEJB();
+            // Appeler l'EJB pour faire le virement avec le montant converti
+            CompteCourantRemote ejb = getEJB();
+            String resultat = ejb.faireVirement(identifiantSource, identifiantDest, montantEnAriary, 
+                "Virement (" + sourceConversion + ") de " + montant + " " + devise + " (converti en " + montantEnAriary + " MGA) par " + 
+                banquierSessionService.getBanquier().getIdentifiant() + 
+                (details != null ? ": " + details : ""));
             
-            virement.metier.Virement virement = virementEjb.creerVirement(
-                identifiantSource, 
-                identifiantDest, 
-                montantEnAriary, 
-                "MGA", // Toujours stocker en MGA
-                "Virement (" + sourceConversion + ") de " + montant + " " + devise + 
-                " (converti en " + montantEnAriary + " MGA) par " + createdBy + 
-                (details != null ? ": " + details : ""),
-                createdBy
-            );
+            model.addAttribute("message", resultat);
 
-            model.addAttribute("message", "Virement créé avec succès (ID: " + virement.getIdVirement() + ") - En attente de validation");
-            
-            // Récupérer le solde actuel depuis la base de données
-            Double soldeActuel = getEJB().getSolde(identifiantSource);
-            model.addAttribute("solde", soldeActuel);
+            // Mettre à jour le solde
+            Double nouveauSolde = ejb.getSolde(identifiantSource);
+            model.addAttribute("solde", nouveauSolde);
 
         } catch (Exception e) {
-            model.addAttribute("error", "Erreur lors de la création du virement: " + e.getMessage());
+            model.addAttribute("error", "Erreur lors du virement: " + e.getMessage());
         }
 
         return compteCourant(session, model);
     }
-
-    // Ajouter cette méthode pour obtenir l'EJB Virement
-    private VirementRemote getVirementEJB() {
-        try {
-            Properties props = new Properties();
-            props.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
-            props.put(Context.PROVIDER_URL, "http-remoting://localhost:8081");
-            
-            Context context = new InitialContext(props);
-            
-            return (VirementRemote) context.lookup(
-                "ejb:/virement-ejb-1.0.0/VirementBean!virement.VirementRemote"
-            );
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur de connexion à l'EJB Virement: " + e.getMessage());
-        }
-    }
-
 
     @GetMapping("/operations-courant")
     public String listOperationsCourant(HttpSession session, Model model) {

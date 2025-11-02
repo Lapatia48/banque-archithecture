@@ -490,7 +490,7 @@
                     <div class="quick-icon">📊</div>
                     <div class="quick-title">Virements</div>
                     <div class="quick-description">Valider, annuler ou modifier un virement</div>
-                    <form action="${pageContext.request.contextPath}/virement/list" method="get" style="margin: 0;">
+                    <form action="${pageContext.request.contextPath}/operations-courant" method="get" style="margin: 0;">
                         <button class="button button-outline" type="submit" style="width: 100%;">
                             Voir les virements
                         </button>
