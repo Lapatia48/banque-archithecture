@@ -1,5 +1,4 @@
 compteCourant\CompteCourantRemote.class
 compteCourant\metier\CompteCourant.class
 compteCourant\CompteCourantBean.class
-compteCourant\metier\Virement.class
 compteCourant\metier\Operation.class
