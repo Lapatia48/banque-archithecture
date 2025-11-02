@@ -6,6 +6,7 @@ controller\CentralController.class
 service\UtilisateurService.class
 controller\PretController.class
 controller\MainController.class
+controller\VirementController.class
 entity\Pourcentage.class
 service\ChangeSessionService.class
 controller\CompteCourantController.class

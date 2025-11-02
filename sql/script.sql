@@ -82,3 +82,32 @@ CREATE TABLE ActionRole (
     role_necessaire INTEGER NOT NULL,
     UNIQUE(nom_table, action)
 );
+
+
+-- virement
+-- Ajouter à votre script existant
+CREATE TABLE Virements (
+    id_virement SERIAL PRIMARY KEY,
+    identifiant_source VARCHAR(50) NOT NULL REFERENCES Utilisateurs(identifiant),
+    identifiant_destination VARCHAR(50) NOT NULL REFERENCES Utilisateurs(identifiant),
+    montant NUMERIC(15,2) NOT NULL,
+    devise VARCHAR(10) DEFAULT 'MGA',
+    details VARCHAR(255),
+    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    date_execution TIMESTAMP NULL,
+    statut VARCHAR(20) DEFAULT 'EN_ATTENTE', -- EN_ATTENTE, VALIDE, EXECUTE, ANNULE, REFUSE
+    motif_refus VARCHAR(255) NULL,
+    created_by VARCHAR(50) NOT NULL -- Banquier qui a créé le virement
+);
+
+-- Ajouter un type d'opération pour les virements validés
+INSERT INTO type_operation (type_operation) VALUES 
+('virement_valide');
+
+-- Mettre à jour les permissions pour les virements
+INSERT INTO ActionRole (nom_table, action, role_necessaire) VALUES 
+('virement', 'creer', 3),
+('virement', 'valider', 2),
+('virement', 'executer', 2),
+('virement', 'annuler', 2),
+('virement', 'refuser', 2);
