@@ -82,3 +82,24 @@ INSERT INTO ActionRole (nom_table, action, role_necessaire) VALUES
 ('courant', 'retrait', 3),
 ('courant', 'virement', 3),
 ('courant', 'consultation', 3);
+
+
+-- Ajouter un type d'opération pour les virements validés
+INSERT INTO type_operation (type_operation) VALUES 
+('virement_valide');
+
+-- Mettre à jour les permissions pour les virements
+INSERT INTO ActionRole (nom_table, action, role_necessaire) VALUES 
+('virement', 'creer', 3),
+('virement', 'valider', 2),
+('virement', 'executer', 2),
+('virement', 'annuler', 2),
+('virement', 'refuser', 2);
+
+-- Données d'exemple pour le compte courant
+INSERT INTO conf_frais (type_compte, montant_inf, montant_sup, frais_forf, frais_pourc) VALUES 
+('courant', 0, 100000, 1000, 0),
+('courant', 100001, 500000, 2000, 0.5),
+('courant', 500001, 1000000, 3000, 0.3),
+('courant', 1000001, 5000000, 5000, 0.2),
+('courant', 5000001, 10000000, 10000, 0.1);

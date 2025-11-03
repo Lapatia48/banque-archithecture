@@ -100,14 +100,14 @@ CREATE TABLE Virements (
     created_by VARCHAR(50) NOT NULL -- Banquier qui a créé le virement
 );
 
--- Ajouter un type d'opération pour les virements validés
-INSERT INTO type_operation (type_operation) VALUES 
-('virement_valide');
 
--- Mettre à jour les permissions pour les virements
-INSERT INTO ActionRole (nom_table, action, role_necessaire) VALUES 
-('virement', 'creer', 3),
-('virement', 'valider', 2),
-('virement', 'executer', 2),
-('virement', 'annuler', 2),
-('virement', 'refuser', 2);
+CREATE TABLE conf_frais (
+    id SERIAL PRIMARY KEY,
+    type_compte VARCHAR(50) NOT NULL,
+    montant_inf NUMERIC(15,2) NOT NULL,
+    montant_sup NUMERIC(15,2) NOT NULL,
+    frais_forf NUMERIC(15,2) DEFAULT 0,
+    frais_pourc NUMERIC(5,2) DEFAULT 0
+);
+
+
