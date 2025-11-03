@@ -95,7 +95,7 @@ CREATE TABLE Virements (
     details VARCHAR(255),
     date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     date_execution TIMESTAMP NULL,
-    statut VARCHAR(20) DEFAULT 'EN_ATTENTE', -- EN_ATTENTE, VALIDE, EXECUTE, ANNULE, REFUSE
+    statut INTEGER DEFAULT 1, -- 1:EN_ATTENTE, 11:VALIDE, 21:EXECUTE, 0:ANNULE, -1:REFUSE
     motif_refus VARCHAR(255) NULL,
     created_by VARCHAR(50) NOT NULL -- Banquier qui a créé le virement
 );

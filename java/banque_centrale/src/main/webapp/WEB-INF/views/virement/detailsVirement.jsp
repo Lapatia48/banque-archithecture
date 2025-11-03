@@ -55,7 +55,7 @@
             <strong>Détails:</strong> ${virement.details}
         </div>
         <div class="detail-item">
-            <strong>Statut:</strong> ${virement.statut}
+            <strong>Statut:</strong> ${virement.statutToText()}
         </div>
         <div class="detail-item">
             <strong>Créé par:</strong> ${virement.createdBy}
@@ -77,7 +77,7 @@
 
     <div class="actions">
         <!-- Actions selon statut -->
-        <c:if test="${virement.statut == 'EN_ATTENTE'}">
+        <c:if test="${virement.statut == 1}">
             <form action="${pageContext.request.contextPath}/virement/valider/${virement.idVirement}" method="post" style="display: inline;">
                 <button type="submit" class="button button-success">✅ Valider</button>
             </form>
@@ -92,7 +92,7 @@
             </form>
         </c:if>
         
-        <c:if test="${virement.statut == 'VALIDE'}">
+        <c:if test="${virement.statut == 11}">
             <form action="${pageContext.request.contextPath}/virement/executer/${virement.idVirement}" method="post" style="display: inline;">
                 <button type="submit" class="button button-success">🚀 Exécuter</button>
             </form>

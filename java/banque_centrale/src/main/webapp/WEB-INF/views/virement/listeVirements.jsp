@@ -12,6 +12,7 @@
         .valide { background-color: #d1edff; }
         .execute { background-color: #d4edda; }
         .annule { background-color: #f8d7da; }
+        .refuse { background-color: #f8d7da; }
         .actions { display: flex; gap: 5px; }
         .button { padding: 5px 10px; text-decoration: none; border: none; cursor: pointer; }
         .button-success { background: #28a745; color: white; }
@@ -96,10 +97,11 @@
             <label for="statutFilter">Statut :</label>
             <select id="statutFilter">
                 <option value="">Tous les statuts</option>
-                <option value="EN_ATTENTE">En attente</option>
-                <option value="VALIDE">Validé</option>
-                <option value="EXECUTE">Exécuté</option>
-                <option value="ANNULE">Annulé</option>
+                <option value="1">En attente</option>
+                <option value="11">Validé</option>
+                <option value="21">Exécuté</option>
+                <option value="0">Annulé</option>
+                <option value="-1">Refusé</option>
             </select>
         </div>
         
@@ -127,14 +129,14 @@
         </thead>
         <tbody id="virementsBody">
             <c:forEach var="virement" items="${tousVirements}">
-                <tr class="${virement.statut.toLowerCase()}" 
+                <tr class="${virement.statutToText().toLowerCase().replace('_', '')}" 
                     data-statut="${virement.statut}" 
                     data-destinataire="${virement.identifiantDestination}">
                     <td>${virement.idVirement}</td>
                     <td>${virement.identifiantSource}</td>
                     <td>${virement.identifiantDestination}</td>
                     <td>${virement.montant} ${virement.devise}</td>
-                    <td>${virement.statut}</td>
+                    <td>${virement.statutToText()}</td>
                     <td>${virement.dateCreation}</td>
                     <td class="actions">
                         <!-- Voir détails -->
@@ -142,7 +144,7 @@
                            class="button" style="background: #007bff; color: white;">👁️ Voir</a>
                         
                         <!-- Actions selon statut -->
-                        <c:if test="${virement.statut == 'EN_ATTENTE'}">
+                        <c:if test="${virement.statut == 1}">
                             <form action="${pageContext.request.contextPath}/virement/valider/${virement.idVirement}" method="post" style="display: inline;">
                                 <button type="submit" class="button button-success">✅ Valider</button>
                             </form>
@@ -152,7 +154,7 @@
                             </form>
                         </c:if>
                         
-                        <c:if test="${virement.statut == 'VALIDE'}">
+                        <c:if test="${virement.statut == 11}">
                             <form action="${pageContext.request.contextPath}/virement/executer/${virement.idVirement}" method="post" style="display: inline;">
                                 <button type="submit" class="button button-success">🚀 Exécuter</button>
                             </form>
