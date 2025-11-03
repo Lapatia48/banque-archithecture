@@ -146,7 +146,7 @@ public class VirementBean implements VirementRemote {
     @Override
     public List<Virement> getVirementsEnAttente() {
         try {
-            String sql = "SELECT * FROM Virements WHERE statut = 'EN_ATTENTE' ORDER BY date_creation DESC";
+            String sql = "SELECT * FROM Virements WHERE statut = 1 ORDER BY date_creation DESC";
             return executerRequeteVirements(sql);
         } catch (Exception e) {
             throw new RuntimeException("Erreur récupération virements en attente: " + e.getMessage());
@@ -248,7 +248,7 @@ public class VirementBean implements VirementRemote {
             if (result[7] != null) {
                 virement.setDateExecution(((Timestamp) result[7]).toLocalDateTime());
             }
-            virement.setStatut((String) result[8]);
+            virement.setStatut(((Number) result[8]).intValue());
             virement.setMotifRefus((String) result[9]);
             virement.setCreatedBy((String) result[10]);
             virements.add(virement);

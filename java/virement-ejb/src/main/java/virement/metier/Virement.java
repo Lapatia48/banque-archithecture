@@ -15,7 +15,7 @@ public class Virement implements Serializable {
     private String details;
     private LocalDateTime dateCreation;
     private LocalDateTime dateExecution;
-    private String statut; 
+    private Integer statut; // 1:EN_ATTENTE, 11:VALIDE, 21:EXECUTE, 0:ANNULE, -1:REFUSE
     private String motifRefus;
     private String createdBy;
     
@@ -31,47 +31,47 @@ public class Virement implements Serializable {
         this.details = details;
         this.createdBy = createdBy;
         this.dateCreation = LocalDateTime.now();
-        this.statut = "EN_ATTENTE";
+        this.statut = 1; // EN_ATTENTE
     }
     
     // Méthodes métier qui retournent l'objet modifié
     public Virement valider() {
-        if (!"EN_ATTENTE".equals(this.statut)) {
+        if (!Integer.valueOf(1).equals(this.statut)) {
             throw new IllegalStateException("Seuls les virements en attente peuvent être validés");
         }
-        this.statut = "VALIDE";
+        this.statut = 11; // VALIDE
         return this;
     }
     
     public Virement executer() {
-        if (!"VALIDE".equals(this.statut)) {
+        if (!Integer.valueOf(11).equals(this.statut)) {
             throw new IllegalStateException("Seuls les virements validés peuvent être exécutés");
         }
-        this.statut = "EXECUTE";
+        this.statut = 21; // EXECUTE
         this.dateExecution = LocalDateTime.now();
         return this;
     }
     
     public Virement annuler(String motif) {
-        if ("EXECUTE".equals(this.statut)) {
+        if (Integer.valueOf(21).equals(this.statut)) {
             throw new IllegalStateException("Impossible d'annuler un virement déjà exécuté");
         }
-        this.statut = "ANNULE";
+        this.statut = 0; // ANNULE
         this.motifRefus = motif;
         return this;
     }
     
     public Virement refuser(String motif) {
-        if (!"EN_ATTENTE".equals(this.statut)) {
+        if (!Integer.valueOf(1).equals(this.statut)) {
             throw new IllegalStateException("Seuls les virements en attente peuvent être refusés");
         }
-        this.statut = "REFUSE";
+        this.statut = -1; // REFUSE
         this.motifRefus = motif;
         return this;
     }
     
     public Virement modifier(Double nouveauMontant, String nouveauxDetails) {
-        if (!"EN_ATTENTE".equals(this.statut)) {
+        if (!Integer.valueOf(1).equals(this.statut)) {
             throw new IllegalStateException("Seuls les virements en attente peuvent être modifiés");
         }
         if (nouveauMontant != null && nouveauMontant > 0) {
@@ -81,6 +81,20 @@ public class Virement implements Serializable {
             this.details = nouveauxDetails;
         }
         return this;
+    }
+    
+    // Méthode utilitaire pour convertir le statut en texte
+    public String statutToText() {
+        if (statut == null) return "INCONNU";
+        
+        switch (statut) {
+            case 1: return "EN_ATTENTE";
+            case 11: return "VALIDE";
+            case 21: return "EXECUTE";
+            case 0: return "ANNULE";
+            case -1: return "REFUSE";
+            default: return "STATUT_INCONNU";
+        }
     }
     
     // Getters et Setters
@@ -108,8 +122,8 @@ public class Virement implements Serializable {
     public LocalDateTime getDateExecution() { return dateExecution; }
     public void setDateExecution(LocalDateTime dateExecution) { this.dateExecution = dateExecution; }
     
-    public String getStatut() { return statut; }
-    public void setStatut(String statut) { this.statut = statut; }
+    public Integer getStatut() { return statut; }
+    public void setStatut(Integer statut) { this.statut = statut; }
     
     public String getMotifRefus() { return motifRefus; }
     public void setMotifRefus(String motifRefus) { this.motifRefus = motifRefus; }
@@ -140,7 +154,7 @@ public class Virement implements Serializable {
                 ", devise='" + devise + '\'' +
                 ", details='" + details + '\'' +
                 ", dateCreation=" + dateCreation +
-                ", statut='" + statut + '\'' +
+                ", statut=" + statut + "(" + statutToText() + ")" +
                 '}';
     }
 }
