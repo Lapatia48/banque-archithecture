@@ -49,6 +49,10 @@ public class Virement implements Serializable {
         }
         this.statut = 21; // EXECUTE
         this.dateExecution = LocalDateTime.now();
+        
+        // Créer le ValidationVirement associé
+        ValidationVirement.createValidationVirement(this);
+        
         return this;
     }
     

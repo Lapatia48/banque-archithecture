@@ -1,5 +1,6 @@
 package virement;
 
+import virement.metier.ValidationVirement;
 import virement.metier.Virement;
 import jakarta.ejb.Remote;
 import java.util.List;
@@ -17,4 +18,9 @@ public interface VirementRemote {
     List<Virement> getVirementsEnAttente();
     List<Virement> getTousVirements();
     Optional<Virement> getVirementById(Long idVirement);
+
+    // Nouvelles méthodes pour ValidationVirement
+    ValidationVirement creerValidationVirement(Virement virement);
+    List<ValidationVirement> getValidationsByVirement(Long idVirement);
+    List<ValidationVirement> getValidationsByUtilisateur(String utilisateur);
 }

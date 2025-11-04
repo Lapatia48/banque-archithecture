@@ -1,7 +1,6 @@
 package virement;
 
-import virement.metier.ConfFrais;
-import virement.metier.Virement;
+import virement.metier.*;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -70,6 +69,7 @@ public class VirementBean implements VirementRemote {
         }
     }
     
+   // Modification de la méthode executerVirement pour créer automatiquement la validation
     @Override
     public Virement executerVirement(Long idVirement) {
         try {
@@ -91,6 +91,9 @@ public class VirementBean implements VirementRemote {
             
             // Effectuer les opérations comptables
             effectuerOperationsComptables(virement);
+            
+            // Créer la validation virement
+            creerValidationVirement(virement);
             
             return virement;
             
@@ -311,5 +314,79 @@ public class VirementBean implements VirementRemote {
         }
         
         return virements;
+    }
+
+    @Override
+    public ValidationVirement creerValidationVirement(Virement virement) {
+        try {
+            ValidationVirement validation = ValidationVirement.createValidationVirement(virement);
+            if (validation == null) {
+                return null; // Statut != 21
+            }
+            
+            // Persister en base
+            String sql = "INSERT INTO ValidationVirement (id_objet, utilisateur, date_validation) " +
+                        "VALUES (?1, ?2, ?3)";
+            
+            Query query = em.createNativeQuery(sql);
+            query.setParameter(1, validation.getIdObjet());
+            query.setParameter(2, validation.getUtilisateur());
+            query.setParameter(3, Timestamp.valueOf(validation.getDateValidation()));
+            query.executeUpdate();
+            
+            // Récupérer l'ID généré
+            Query idQuery = em.createNativeQuery("SELECT currval('validationvirement_id_seq')");
+            Long id = ((Number) idQuery.getSingleResult()).longValue();
+            validation.setId(id);
+            
+            return validation;
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur création validation virement: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public List<ValidationVirement> getValidationsByVirement(Long idVirement) {
+        try {
+            String sql = "SELECT * FROM ValidationVirement WHERE id_objet = ?1 ORDER BY date_validation DESC";
+            return executerRequeteValidations(sql, idVirement);
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur récupération validations par virement: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public List<ValidationVirement> getValidationsByUtilisateur(String utilisateur) {
+        try {
+            String sql = "SELECT * FROM ValidationVirement WHERE utilisateur = ?1 ORDER BY date_validation DESC";
+            return executerRequeteValidations(sql, utilisateur);
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur récupération validations par utilisateur: " + e.getMessage());
+        }
+    }
+    
+    // Méthode privée pour exécuter les requêtes de validation
+    private List<ValidationVirement> executerRequeteValidations(String sql, Object... params) {
+        Query query = em.createNativeQuery(sql);
+        for (int i = 0; i < params.length; i++) {
+            query.setParameter(i + 1, params[i]);
+        }
+        
+        List<Object[]> results = query.getResultList();
+        List<ValidationVirement> validations = new ArrayList<>();
+        
+        for (Object[] result : results) {
+            ValidationVirement validation = new ValidationVirement();
+            validation.setId(((Number) result[0]).longValue());
+            validation.setIdObjet(((Number) result[1]).longValue());
+            validation.setUtilisateur((String) result[2]);
+            if (result[3] != null) {
+                validation.setDateValidation(((Timestamp) result[3]).toLocalDateTime());
+            }
+            validations.add(validation);
+        }
+        
+        return validations;
     }
 }

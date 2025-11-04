@@ -110,4 +110,10 @@ CREATE TABLE conf_frais (
     frais_pourc NUMERIC(5,2) DEFAULT 0
 );
 
+CREATE TABLE ValidationVirement (
+    id SERIAL PRIMARY KEY,
+    id_objet BIGINT NOT NULL REFERENCES Virements(id_virement),
+    utilisateur VARCHAR(50) NOT NULL REFERENCES Utilisateurs(identifiant),
+    date_validation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
