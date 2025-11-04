@@ -3,6 +3,9 @@ package virement;
 import virement.metier.Virement;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.Persistence;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import java.sql.Timestamp;
@@ -190,43 +193,59 @@ public class VirementBean implements VirementRemote {
     }
     
     private void effectuerOperationsComptables(Virement virement) {
-        // Retrait du compte source
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("virement");
+        EntityManager tempEm = emf.createEntityManager();
+        EntityTransaction transaction = null;
 
+        try{
+            transaction = tempEm.getTransaction();
+            transaction.begin();
+
+            String retraitSql = "UPDATE Comptes SET solde = solde - ?1 WHERE identifiant = ?2 AND type_compte = 'courant'";
+            Query retraitQuery = em.createNativeQuery(retraitSql);
+            retraitQuery.setParameter(1, virement.getMontant());
+            retraitQuery.setParameter(2, virement.getIdentifiantSource());
+            retraitQuery.executeUpdate();
+            
+            // Dépôt sur le compte destination
+            String depotSql = "UPDATE Comptes SET solde = solde + ?1 WHERE identifiant = ?2 AND type_compte = 'courant'";
+            Query depotQuery = em.createNativeQuery(depotSql);
+            depotQuery.setParameter(1, virement.getMontant());
+            depotQuery.setParameter(2, virement.getIdentifiantDestination());
+            depotQuery.executeUpdate();
+            
+            // Enregistrer les opérations
+            String operationSql = "INSERT INTO Operations (identifiant, compte, type_operation, montant, details, date_operation) " +
+                                 "VALUES (?1, 'courant', ?2, ?3, ?4, ?5)";
+            
+            // Opération de retrait
+            Query opRetrait = em.createNativeQuery(operationSql);
+            opRetrait.setParameter(1, virement.getIdentifiantSource());
+            opRetrait.setParameter(2, "virement_valide");
+            opRetrait.setParameter(3, -virement.getMontant());
+            opRetrait.setParameter(4, "Virement vers " + virement.getIdentifiantDestination() + ": " + virement.getDetails());
+            opRetrait.setParameter(5, Timestamp.valueOf(LocalDateTime.now()));
+            opRetrait.executeUpdate();
+            
+            // Opération de dépôt
+            Query opDepot = em.createNativeQuery(operationSql);
+            opDepot.setParameter(1, virement.getIdentifiantDestination());
+            opDepot.setParameter(2, "virement_valide");
+            opDepot.setParameter(3, virement.getMontant());
+            opDepot.setParameter(4, "Virement de " + virement.getIdentifiantSource() + ": " + virement.getDetails());
+            opDepot.setParameter(5, Timestamp.valueOf(LocalDateTime.now()));
+            opDepot.executeUpdate();
+        }
+        catch (Exception e) {
+            if (transaction != null && transaction.isActive()) {
+                transaction.rollback();
+            }
+            throw new RuntimeException("Erreur lors des opérations comptables: " + e.getMessage(), e);
+        } finally {
+            tempEm.close();
+            emf.close();
+        }
         
-        String retraitSql = "UPDATE Comptes SET solde = solde - ?1 WHERE identifiant = ?2 AND type_compte = 'courant'";
-        Query retraitQuery = em.createNativeQuery(retraitSql);
-        retraitQuery.setParameter(1, virement.getMontant());
-        retraitQuery.setParameter(2, virement.getIdentifiantSource());
-        retraitQuery.executeUpdate();
-        
-        // Dépôt sur le compte destination
-        String depotSql = "UPDATE Comptes SET solde = solde + ?1 WHERE identifiant = ?2 AND type_compte = 'courant'";
-        Query depotQuery = em.createNativeQuery(depotSql);
-        depotQuery.setParameter(1, virement.getMontant());
-        depotQuery.setParameter(2, virement.getIdentifiantDestination());
-        depotQuery.executeUpdate();
-        
-        // Enregistrer les opérations
-        String operationSql = "INSERT INTO Operations (identifiant, compte, type_operation, montant, details, date_operation) " +
-                             "VALUES (?1, 'courant', ?2, ?3, ?4, ?5)";
-        
-        // Opération de retrait
-        Query opRetrait = em.createNativeQuery(operationSql);
-        opRetrait.setParameter(1, virement.getIdentifiantSource());
-        opRetrait.setParameter(2, "virement_valide");
-        opRetrait.setParameter(3, -virement.getMontant());
-        opRetrait.setParameter(4, "Virement vers " + virement.getIdentifiantDestination() + ": " + virement.getDetails());
-        opRetrait.setParameter(5, Timestamp.valueOf(LocalDateTime.now()));
-        opRetrait.executeUpdate();
-        
-        // Opération de dépôt
-        Query opDepot = em.createNativeQuery(operationSql);
-        opDepot.setParameter(1, virement.getIdentifiantDestination());
-        opDepot.setParameter(2, "virement_valide");
-        opDepot.setParameter(3, virement.getMontant());
-        opDepot.setParameter(4, "Virement de " + virement.getIdentifiantSource() + ": " + virement.getDetails());
-        opDepot.setParameter(5, Timestamp.valueOf(LocalDateTime.now()));
-        opDepot.executeUpdate();
     }
     
     private List<Virement> executerRequeteVirements(String sql, Object... params) {
