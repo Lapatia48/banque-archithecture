@@ -1,5 +1,6 @@
 package virement;
 
+import virement.metier.ConfFrais;
 import virement.metier.Virement;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
@@ -191,19 +192,54 @@ public class VirementBean implements VirementRemote {
         query.setParameter(6, virement.getIdVirement());
         query.executeUpdate();
     }
-    
+
+
+    public static double calculerFraisPourVirement(Virement virement, EntityManager em) {
+        if (virement == null || virement.getMontant() == null || em == null) {
+            return 0.0;
+        }
+
+        try {
+            String sql = "SELECT * FROM conf_frais WHERE ?1 BETWEEN montant_inf AND montant_sup AND type_compte = 'courant'";
+            Query query = em.createNativeQuery(sql);
+            query.setParameter(1, virement.getMontant());
+            
+            List<Object[]> results = query.getResultList();
+            if (!results.isEmpty()) {
+                Object[] result = results.get(0);
+                ConfFrais confFrais = new ConfFrais();
+                confFrais.setId(((Number) result[0]).longValue());
+                confFrais.setTypeCompte((String) result[1]);
+                confFrais.setMontantInf(((Number) result[2]).doubleValue());
+                confFrais.setMontantSup(((Number) result[3]).doubleValue());
+                confFrais.setFraisForf(result[4] != null ? ((Number) result[4]).doubleValue() : 0.0);
+                confFrais.setFraisPourc(result[5] != null ? ((Number) result[5]).doubleValue() : 0.0);
+                
+                // Appel de la méthode calculerFrais de l'objet
+                return confFrais.calculerFrais(virement.getMontant());
+            }
+            return 0.0;
+        } catch (Exception e) {
+            return 0.0;
+        }
+    }
+
     private void effectuerOperationsComptables(Virement virement) {
         EntityManagerFactory emf = Persistence.createEntityManagerFactory("virement");
         EntityManager tempEm = emf.createEntityManager();
         EntityTransaction transaction = null;
 
+        // double frais = calculerFraisPourVirement(virement, em);
+        double frais = 1000;
+
         try{
             transaction = tempEm.getTransaction();
             transaction.begin();
 
+            // retrait sur source
             String retraitSql = "UPDATE Comptes SET solde = solde - ?1 WHERE identifiant = ?2 AND type_compte = 'courant'";
             Query retraitQuery = em.createNativeQuery(retraitSql);
-            retraitQuery.setParameter(1, virement.getMontant());
+            retraitQuery.setParameter(1, virement.getMontant()+frais);
             retraitQuery.setParameter(2, virement.getIdentifiantSource());
             retraitQuery.executeUpdate();
             
