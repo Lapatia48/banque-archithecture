@@ -229,8 +229,7 @@ public class VirementBean implements VirementRemote {
         EntityManager tempEm = emf.createEntityManager();
         EntityTransaction transaction = null;
 
-        // double frais = calculerFraisPourVirement(virement, em);
-        double frais = 1000;
+        double frais = calculerFraisPourVirement(virement, em);
 
         try{
             transaction = tempEm.getTransaction();
