@@ -6,6 +6,7 @@ import jakarta.ejb.Remote;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Remote
@@ -28,5 +29,5 @@ public interface VirementRemote {
 
     // limite journaliere
     Double getSommeVirementsParDate(String identifiant, LocalDateTime date);
-    Boolean verifierLimiteJournaliere(Long idVirement);
+    Map<String, Object> verifierLimiteJournaliereAvecDetails(Long idVirement);
 }

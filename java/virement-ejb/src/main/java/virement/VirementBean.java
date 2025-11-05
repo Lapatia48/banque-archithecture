@@ -11,7 +11,9 @@ import jakarta.persistence.Query;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Stateless
@@ -402,28 +404,36 @@ public class VirementBean implements VirementRemote {
     @Override
     public Double getSommeVirementsParDate(String identifiant, LocalDateTime date) {
         try {
-            // Convertir LocalDateTime en Date SQL pour la comparaison
             java.sql.Date sqlDate = java.sql.Date.valueOf(date.toLocalDate());
             
+            System.out.println("DEBUG - Recherche virements pour: " + identifiant + " à la date: " + sqlDate);
+            
             String sql = "SELECT COALESCE(SUM(montant), 0) FROM Virements " +
-                        "WHERE (identifiant_source = ?1 OR identifiant_destination = ?1) " +
-                        "AND date_execution::date = ?2 " +
-                        "AND statut = 21"; // Seulement les virements exécutés
+                        "WHERE identifiant_source = ?1 " +
+                        "AND DATE(date_creation) = ?2 " +
+                        "AND statut IN (11, 21)";
             
             Query query = em.createNativeQuery(sql);
             query.setParameter(1, identifiant);
             query.setParameter(2, sqlDate);
             
             Object result = query.getSingleResult();
-            return result != null ? ((Number) result).doubleValue() : 0.0;
+            Double somme = result != null ? ((Number) result).doubleValue() : 0.0;
+            
+            System.out.println("DEBUG - Somme trouvée: " + somme);
+            return somme;   
             
         } catch (Exception e) {
-            throw new RuntimeException("Erreur récupération somme virements: " + e.getMessage());
+            System.out.println("Erreur getSommeVirementsParDate: " + e.getMessage());
+            e.printStackTrace();
+            return 0.0;
         }
     }
 
     @Override
-    public Boolean verifierLimiteJournaliere(Long idVirement) {
+    public Map<String, Object> verifierLimiteJournaliereAvecDetails(Long idVirement) {
+        Map<String, Object> resultat = new HashMap<>();
+        
         try {
             Virement virement = getVirementById(idVirement)
                 .orElseThrow(() -> new RuntimeException("Virement non trouvé"));
@@ -442,12 +452,33 @@ public class VirementBean implements VirementRemote {
             Object resultLimite = queryLimite.getSingleResult();
             Double limiteJournaliere = resultLimite != null ? ((Number) resultLimite).doubleValue() : 0.0;
             
-            // Vérifier la limite
-            return (limiteJournaliere == 0) || ((sommeVirementsAujourdhui + montantVirement) <= limiteJournaliere);
+            // Calculer le total après virement
+            Double totalApresVirement = sommeVirementsAujourdhui + montantVirement;
+            Boolean limiteRespectee = (limiteJournaliere == 0) || (totalApresVirement <= limiteJournaliere);
+            
+            // Remplir le résultat avec tous les détails
+            resultat.put("limiteRespectee", limiteRespectee);
+            resultat.put("limiteJournaliere", limiteJournaliere);
+            resultat.put("sommeVirementsAujourdhui", sommeVirementsAujourdhui);
+            resultat.put("montantVirement", montantVirement);
+            resultat.put("totalApresVirement", totalApresVirement);
+            resultat.put("identifiant", identifiantSource);
+            resultat.put("virementId", idVirement);
+            
+            System.out.println("DEBUG Limite - " + identifiantSource + 
+                            " | Déjà viré: " + sommeVirementsAujourdhui + 
+                            " | Virement: " + montantVirement + 
+                            " | Total: " + totalApresVirement +
+                            " | Limite: " + limiteJournaliere +
+                            " | Respecté: " + limiteRespectee);
             
         } catch (Exception e) {
-            return false;
+            resultat.put("limiteRespectee", false);
+            resultat.put("erreur", e.getMessage());
+            System.out.println("DEBUG Limite - Erreur: " + e.getMessage());
         }
+        
+        return resultat;
     }
-    
+
 }

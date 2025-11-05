@@ -128,15 +128,72 @@ public class VirementController {
             
             VirementRemote ejb = getVirementEJB();
             
-            // ✅ VÉRIFICATION LIMITE JOURNALIÈRE (version centralisée)
-            if (!ejb.verifierLimiteJournaliere(idVirement)) {
-                model.addAttribute("error", "Limite journalière de virement dépassée!");
+            //  VÉRIFICATION LIMITE JOURNALIÈRE avec détails
+            Map<String, Object> verification = ejb.verifierLimiteJournaliereAvecDetails(idVirement);
+            Boolean limiteRespectee = (Boolean) verification.get("limiteRespectee");
+            
+            if (!limiteRespectee) {
+                // Récupérer tous les détails pour le message d'erreur
+                Double limiteJournaliere = (Double) verification.get("limiteJournaliere");
+                Double sommeVirementsAujourdhui = (Double) verification.get("sommeVirementsAujourdhui");
+                Double montantVirement = (Double) verification.get("montantVirement");
+                Double totalApresVirement = (Double) verification.get("totalApresVirement");
+                String identifiant = (String) verification.get("identifiant");
+                
+                String messageErreur = String.format(
+                    " Limite journalière dépassée pour %s!%n" +
+                    "• Déjà viré aujourd'hui: %,.2f MGA%n" +
+                    "• Montant du virement: %,.2f MGA%n" +
+                    "• Total après virement: %,.2f MGA%n" +
+                    "• Limite autorisée: %,.2f MGA",
+                    identifiant, 
+                    sommeVirementsAujourdhui, 
+                    montantVirement, 
+                    totalApresVirement, 
+                    limiteJournaliere
+                );
+                
+                model.addAttribute("error", messageErreur);
                 return listVirements(session, model);
             }
             
-            // ✅ EXÉCUTER le virement
+            // ✅ EXÉCUTER le virement si la limite est respectée
             Virement virement = ejb.executerVirement(idVirement);
-            model.addAttribute("message", "Virement #" + virement.getIdVirement() + " exécuté avec succès");
+            
+            // Récupérer les détails pour le message de succès
+            Double sommeVirementsAujourdhui = (Double) verification.get("sommeVirementsAujourdhui");
+            Double montantVirement = (Double) verification.get("montantVirement");
+            Double totalApresVirement = sommeVirementsAujourdhui + montantVirement;
+            Double limiteJournaliere = (Double) verification.get("limiteJournaliere");
+            String identifiant = (String) verification.get("identifiant");
+            
+            String messageSucces;
+            if (limiteJournaliere > 0) {
+                messageSucces = String.format(
+                    " Virement #%d exécuté avec succès!%n" +
+                    "• Client: %s%n" +
+                    "• Montant: %,.2f MGA%n" +
+                    "• Total viré aujourd'hui: %,.2f / %,.2f MGA",
+                    virement.getIdVirement(),
+                    identifiant,
+                    montantVirement,
+                    totalApresVirement,
+                    limiteJournaliere
+                );
+            } else {
+                messageSucces = String.format(
+                    " Virement #%d exécuté avec succès!%n" +
+                    "• Client: %s%n" +
+                    "• Montant: %,.2f MGA%n" +
+                    "• Total viré aujourd'hui: %,.2f MGA (limite illimitée)",
+                    virement.getIdVirement(),
+                    identifiant,
+                    montantVirement,
+                    totalApresVirement
+                );
+            }
+            
+            model.addAttribute("message", messageSucces);
             
         } catch (Exception e) {
             model.addAttribute("error", "Erreur exécution: " + e.getMessage());
