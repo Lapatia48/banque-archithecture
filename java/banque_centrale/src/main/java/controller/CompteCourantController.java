@@ -378,7 +378,7 @@ public class CompteCourantController {
         return compteCourant(session, model);
     }
 
-   @PostMapping("/virement-courant")
+    @PostMapping("/virement-courant")
     public String creerVirementCourant(
             @RequestParam("identifiantDest") String identifiantDest,
             @RequestParam("montant") Double montant,
@@ -387,8 +387,7 @@ public class CompteCourantController {
             HttpSession session, Model model) {
         
         try {
-            if (!verifierSecurite(session, model, "courant") || 
-                !banquierSessionService.aRole("courant", ((Utilisateur) session.getAttribute("utilisateur")).getIdentifiant())) {
+            if (!banquierSessionService.aRolePourAction("courant", "creerVirement")) {
                 model.addAttribute("error", "Rôle insuffisant pour effectuer un virement");
                 return compteCourant(session, model);
             }
@@ -398,18 +397,28 @@ public class CompteCourantController {
 
             Double montantEnAriary;
             String sourceConversion;
+            Double fraisAriary = 0.0;
             
             // ✅ DÉTECTER automatiquement si c'est une devise EJB ou WebService
             List<String> devisesEjb = changeSessionService.getDevisesDisponibles();
+            VirementRemote virementEjb = getVirementEJB();
             
             if (devisesEjb.contains(devise)) {
                 // Conversion via EJB
                 montantEnAriary = changeSessionService.convertirVersAriary(devise, montant);
                 sourceConversion = "EJB";
+
+                // frais pour montant en ariary
+                fraisAriary = virementEjb.calculerFraisPourVirement(montantEnAriary);
+
             } else {
                 // Conversion via WebService
                 montantEnAriary = convertirViaWebService(devise, montant);
                 sourceConversion = "WS";
+
+                // frais pour montant en ariary
+                fraisAriary = virementEjb.calculerFraisPourVirement(montantEnAriary);
+
             }
 
             // Vérifier solde (en MGA) - On garde cette vérification
@@ -421,15 +430,15 @@ public class CompteCourantController {
 
             // ✅ NOUVEAU : Créer le virement via l'EJB Virement au lieu d'exécuter immédiatement
             String createdBy = banquierSessionService.getBanquier().getIdentifiant();
-            VirementRemote virementEjb = getVirementEJB();
             
             virement.metier.Virement virement = virementEjb.creerVirement(
                 identifiantSource, 
                 identifiantDest, 
-                montantEnAriary, 
+                montantEnAriary,
+                fraisAriary, // ✅ FRAIS CALCULÉ
                 "MGA", // Toujours stocker en MGA
                 "Virement (" + sourceConversion + ") de " + montant + " " + devise + 
-                " (converti en " + montantEnAriary + " MGA) par " + createdBy + 
+                " (converti en " + montantEnAriary + " MGA, frais: " + fraisAriary + " MGA) par " + createdBy + 
                 (details != null ? ": " + details : ""),
                 createdBy
             );

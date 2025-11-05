@@ -52,6 +52,9 @@
             <strong>Montant:</strong> ${virement.montant} ${virement.devise}
         </div>
         <div class="detail-item">
+            <strong>Frais:</strong> ${virement.fraisDeVirement}
+        </div>
+        <div class="detail-item">
             <strong>Détails:</strong> ${virement.details}
         </div>
         <div class="detail-item">
@@ -79,31 +82,37 @@
         <!-- Actions selon statut -->
         <c:if test="${virement.statut == 1}">
             <form action="${pageContext.request.contextPath}/virement/valider/${virement.idVirement}" method="post" style="display: inline;">
-                <button type="submit" class="button button-success">✅ Valider</button>
+                <button type="submit" class="button button-success"> Valider</button>
             </form>
             
-            <button onclick="showRefusModal()" class="button button-danger">❌ Refuser</button>
+            <button onclick="showRefusModal()" class="button button-danger"> Refuser</button>
             
-            <button onclick="showModificationModal()" class="button button-warning">✏️ Modifier</button>
+            <button onclick="showModificationModal()" class="button button-warning"> Modifier</button>
             
             <form action="${pageContext.request.contextPath}/virement/annuler/${virement.idVirement}" method="post" style="display: inline;">
                 <input type="hidden" name="motif" value="Annulation depuis détails">
-                <button type="submit" class="button button-danger">🗑️ Annuler</button>
+                <button type="submit" class="button button-danger"> Annuler</button>
             </form>
         </c:if>
         
         <c:if test="${virement.statut == 11}">
             <form action="${pageContext.request.contextPath}/virement/executer/${virement.idVirement}" method="post" style="display: inline;">
-                <button type="submit" class="button button-success">🚀 Exécuter</button>
+                <button type="submit" class="button button-success"> Exécuter</button>
             </form>
             
             <form action="${pageContext.request.contextPath}/virement/annuler/${virement.idVirement}" method="post" style="display: inline;">
                 <input type="hidden" name="motif" value="Annulation après validation">
-                <button type="submit" class="button button-danger">❌ Annuler</button>
+                <button type="submit" class="button button-danger"> Annuler</button>
+            </form>
+        </c:if>
+        <c:if test="${virement.statut == 21}">
+            <form action="${pageContext.request.contextPath}/virement/annuler-execution/${virement.idVirement}" method="post" style="display: inline;">
+                <input type="hidden" name="motif" value="Rollback">
+                <button type="submit" class="button button-success"> Rollback</button>
             </form>
         </c:if>
 
-        <a href="${pageContext.request.contextPath}/virement/list" class="button button-primary">📋 Liste complète</a>
+        <a href="${pageContext.request.contextPath}/virement/list" class="button button-primary"> Liste complete</a>
     </div>
 
     <!-- Modal Refus -->

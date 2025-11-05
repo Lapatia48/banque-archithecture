@@ -10,6 +10,7 @@ public class CompteCourant implements Serializable {
     private String libelle;
     private Double solde;
     private Integer niveau;
+    private Double limiteJournaliere; // Nouveau champ
     
     // Constructeurs
     public CompteCourant() {}
@@ -19,6 +20,15 @@ public class CompteCourant implements Serializable {
         this.libelle = libelle;
         this.solde = solde;
         this.niveau = niveau;
+        this.limiteJournaliere = 0.0; // Valeur par défaut
+    }
+    
+    public CompteCourant(String identifiantUtilisateur, String libelle, Double solde, Integer niveau, Double limiteJournaliere) {
+        this.identifiantUtilisateur = identifiantUtilisateur;
+        this.libelle = libelle;
+        this.solde = solde;
+        this.niveau = niveau;
+        this.limiteJournaliere = limiteJournaliere;
     }
     
     // Méthodes métier
@@ -75,6 +85,9 @@ public class CompteCourant implements Serializable {
     public Integer getNiveau() { return niveau; }
     public void setNiveau(Integer niveau) { this.niveau = niveau; }
     
+    public Double getLimiteJournaliere() { return limiteJournaliere; }
+    public void setLimiteJournaliere(Double limiteJournaliere) { this.limiteJournaliere = limiteJournaliere; }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -96,6 +109,7 @@ public class CompteCourant implements Serializable {
                 ", libelle='" + libelle + '\'' +
                 ", solde=" + solde +
                 ", niveau=" + niveau +
+                ", limiteJournaliere=" + limiteJournaliere +
                 '}';
     }
 }

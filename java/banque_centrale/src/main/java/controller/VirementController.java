@@ -66,42 +66,16 @@ public class VirementController {
         return "virement/listeVirements";
     }
 
-    @PostMapping("/creer")
-    public String creerVirement(
-            @RequestParam("identifiantSource") String identifiantSource,
-            @RequestParam("identifiantDest") String identifiantDest,
-            @RequestParam("montant") Double montant,
-            @RequestParam("devise") String devise,
-            @RequestParam(value = "details", required = false) String details,
-            HttpSession session, Model model) {
-        
-        try {
-            if (!banquierSessionService.estConnecte()) {
-                model.addAttribute("erreur", "Banquier non connecté");
-                return "redirect:/login";
-            }
-            
-            String createdBy = banquierSessionService.getBanquier().getIdentifiant();
-            VirementRemote ejb = getVirementEJB();
-            
-            Virement virement = ejb.creerVirement(identifiantSource, identifiantDest, montant, devise, details, createdBy);
-            
-            model.addAttribute("message", "Virement créé avec succès (ID: " + virement.getIdVirement() + ")");
-            model.addAttribute("virement", virement);
-            
-        } catch (Exception e) {
-            model.addAttribute("error", "Erreur création virement: " + e.getMessage());
-        }
-        
-        return listVirements(session, model);
-    }
-
     @PostMapping("/valider/{id}")
     public String validerVirement(@PathVariable("id") Long idVirement, HttpSession session, Model model) {
         try {
             if (!banquierSessionService.estConnecte()) {
                 model.addAttribute("erreur", "Banquier non connecté");
                 return "redirect:/login";
+            }
+            if (!banquierSessionService.aRolePourAction("courant", "validerVirement")) {
+                model.addAttribute("error", "Rôle insuffisant pour valider un virement");
+                return listVirements(session, model);
             }
             
             VirementRemote ejb = getVirementEJB();
@@ -141,13 +115,6 @@ public class VirementController {
         return "virement/detailsVirement";
     }
 
-    // Méthode pour récupérer les données du virement sans objet complexe
-    private Map<String, Object> getVirementData(Long idVirement) {
-        // Implémentation directe en JDBC ou via une méthode simplifiée
-        // Pour l'instant, retournons null et gérons l'erreur
-        return null;
-    }
-
     @PostMapping("/executer/{id}")
     public String executerVirement(@PathVariable("id") Long idVirement, HttpSession session, Model model) {
         try {
@@ -155,11 +122,79 @@ public class VirementController {
                 model.addAttribute("erreur", "Banquier non connecté");
                 return "redirect:/login";
             }
+            if (!banquierSessionService.aRolePourAction("courant", "executerVirement")) {
+                model.addAttribute("error", "Rôle insuffisant pour executer un virement");
+                return listVirements(session, model);
+            }
             
             VirementRemote ejb = getVirementEJB();
+            
+            //  VÉRIFICATION LIMITE JOURNALIÈRE avec détails
+            Map<String, Object> verification = ejb.verifierLimiteJournaliereAvecDetails(idVirement);
+            Boolean limiteRespectee = (Boolean) verification.get("limiteRespectee");
+            
+            if (!limiteRespectee) {
+                // Récupérer tous les détails pour le message d'erreur
+                Double limiteJournaliere = (Double) verification.get("limiteJournaliere");
+                Double sommeVirementsAujourdhui = (Double) verification.get("sommeVirementsAujourdhui");
+                Double montantVirement = (Double) verification.get("montantVirement");
+                Double totalApresVirement = (Double) verification.get("totalApresVirement");
+                String identifiant = (String) verification.get("identifiant");
+                
+                String messageErreur = String.format(
+                    " Limite journalière dépassée pour %s!%n" +
+                    "• Déjà viré aujourd'hui: %,.2f MGA%n" +
+                    "• Montant du virement: %,.2f MGA%n" +
+                    "• Total après virement: %,.2f MGA%n" +
+                    "• Limite autorisée: %,.2f MGA",
+                    identifiant, 
+                    sommeVirementsAujourdhui, 
+                    montantVirement, 
+                    totalApresVirement, 
+                    limiteJournaliere
+                );
+                
+                model.addAttribute("error", messageErreur);
+                return listVirements(session, model);
+            }
+            
+            // ✅ EXÉCUTER le virement si la limite est respectée
             Virement virement = ejb.executerVirement(idVirement);
             
-            model.addAttribute("message", "Virement #" + virement.getIdVirement() + " exécuté avec succès");
+            // Récupérer les détails pour le message de succès
+            Double sommeVirementsAujourdhui = (Double) verification.get("sommeVirementsAujourdhui");
+            Double montantVirement = (Double) verification.get("montantVirement");
+            Double totalApresVirement = sommeVirementsAujourdhui + montantVirement;
+            Double limiteJournaliere = (Double) verification.get("limiteJournaliere");
+            String identifiant = (String) verification.get("identifiant");
+            
+            String messageSucces;
+            if (limiteJournaliere > 0) {
+                messageSucces = String.format(
+                    " Virement #%d exécuté avec succès!%n" +
+                    "• Client: %s%n" +
+                    "• Montant: %,.2f MGA%n" +
+                    "• Total viré aujourd'hui: %,.2f / %,.2f MGA",
+                    virement.getIdVirement(),
+                    identifiant,
+                    montantVirement,
+                    totalApresVirement,
+                    limiteJournaliere
+                );
+            } else {
+                messageSucces = String.format(
+                    " Virement #%d exécuté avec succès!%n" +
+                    "• Client: %s%n" +
+                    "• Montant: %,.2f MGA%n" +
+                    "• Total viré aujourd'hui: %,.2f MGA (limite illimitée)",
+                    virement.getIdVirement(),
+                    identifiant,
+                    montantVirement,
+                    totalApresVirement
+                );
+            }
+            
+            model.addAttribute("message", messageSucces);
             
         } catch (Exception e) {
             model.addAttribute("error", "Erreur exécution: " + e.getMessage());
@@ -176,6 +211,10 @@ public class VirementController {
             if (!banquierSessionService.estConnecte()) {
                 model.addAttribute("erreur", "Banquier non connecté");
                 return "redirect:/login";
+            }
+            if (!banquierSessionService.aRolePourAction("courant", "annulerVirement")) {
+                model.addAttribute("error", "Rôle insuffisant pour annuler un virement");
+                return listVirements(session, model);
             }
             
             VirementRemote ejb = getVirementEJB();
@@ -198,6 +237,10 @@ public class VirementController {
             if (!banquierSessionService.estConnecte()) {
                 model.addAttribute("erreur", "Banquier non connecté");
                 return "redirect:/login";
+            }
+            if (!banquierSessionService.aRolePourAction("courant", "refuserVirement")) {
+                model.addAttribute("error", "Rôle insuffisant pour refuser un virement");
+                return listVirements(session, model);
             }
             
             VirementRemote ejb = getVirementEJB();
@@ -230,6 +273,35 @@ public class VirementController {
             
         } catch (Exception e) {
             model.addAttribute("error", "Erreur modification virement: " + e.getMessage());
+        }
+        
+        return listVirements(session, model);
+    }
+
+
+    @PostMapping("/annuler-execution/{id}")
+    public String annulerExecutionVirement(@PathVariable("id") Long idVirement,
+                                        @RequestParam("motif") String motif,
+                                        HttpSession session, Model model) {
+        try {
+            if (!banquierSessionService.estConnecte()) {
+                model.addAttribute("erreur", "Banquier non connecté");
+                return "redirect:/login";
+            }
+            if (!banquierSessionService.aRolePourAction("courant", "rollbackVirement")) {
+                model.addAttribute("error", "Rôle insuffisant pour roollback un virement");
+                return listVirements(session, model);
+            }
+            
+            VirementRemote ejb = getVirementEJB();
+            Virement virement = ejb.annulerExecutionVirement(idVirement, motif);
+            
+            model.addAttribute("message", 
+                "Virement #" + virement.getIdVirement() + " annulé avec succès après exécution. " +
+                "Montant remboursé: " + (virement.getMontant() + virement.getFraisDeVirement()) + " MGA");
+            
+        } catch (Exception e) {
+            model.addAttribute("error", "Erreur annulation exécution: " + e.getMessage());
         }
         
         return listVirements(session, model);

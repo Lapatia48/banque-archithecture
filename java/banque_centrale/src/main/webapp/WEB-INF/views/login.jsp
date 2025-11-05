@@ -20,13 +20,13 @@
 <body>
     <div class="login-container-max">
 
-        <div class="login-container" style="display: none;">
-            <h1>Login utilisateur</h1>
+        <div class="login-container">
+            <h1 style="display: none;">Login utilisateur</h1>
             <form action="${pageContext.request.contextPath}/login" method="post">
-                <label for="username">Nom d'utilisateur:</label>
-                <input type="text" id="username" name="username" value="Lapatia" required>
-                <label for="password">Mot de passe:</label>
-                <input type="password" id="password" name="password" value="1234" required>
+                <label for="username">Identifiant compte</label>
+                <input type="text" id="username" name="username" value="CL001" required>
+                <label for="password" style="display: none;">Mot de passe:</label>
+                <input type="password" id="password" name="password" value="1234" required style="display: none;">
         </div>
         <div class="login-container">
             <!-- SECTION BANQUIER (visible) -->
@@ -39,12 +39,7 @@
                 <input type="submit" value="Se connecter">
             </form>
         </div>
-        <p>${erreur}</p>
-
-        <div>
-            <h6>Voir banquier connectee</h6>
-            <a href="${pageContext.request.contextPath}/getBanquieer">Voir le banquier</a>
-        </div>
+        <p style="color: red;">${erreur}</p>
     </div>
 </body>
 </html>

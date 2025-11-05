@@ -122,6 +122,7 @@
                 <th>Source</th>
                 <th>Destination</th>
                 <th>Montant</th>
+                <th>Frais</th>
                 <th>Statut</th>
                 <th>Date création</th>
                 <th>Actions</th>
@@ -136,27 +137,28 @@
                     <td>${virement.identifiantSource}</td>
                     <td>${virement.identifiantDestination}</td>
                     <td>${virement.montant} ${virement.devise}</td>
+                    <td>${virement.fraisDeVirement}</td>
                     <td>${virement.statutToText()}</td>
                     <td>${virement.dateCreation}</td>
                     <td class="actions">
                         <!-- Voir détails -->
                         <a href="${pageContext.request.contextPath}/virement/details/${virement.idVirement}" 
-                           class="button" style="background: #007bff; color: white;">👁️ Voir</a>
+                           class="button" style="background: #007bff; color: white;"> Voir</a>
                         
                         <!-- Actions selon statut -->
                         <c:if test="${virement.statut == 1}">
                             <form action="${pageContext.request.contextPath}/virement/valider/${virement.idVirement}" method="post" style="display: inline;">
-                                <button type="submit" class="button button-success">✅ Valider</button>
+                                <button type="submit" class="button button-success"> Valider</button>
                             </form>
                             <form action="${pageContext.request.contextPath}/virement/annuler/${virement.idVirement}" method="post" style="display: inline;">
                                 <input type="hidden" name="motif" value="Annulation depuis liste">
-                                <button type="submit" class="button button-danger">❌ Annuler</button>
+                                <button type="submit" class="button button-danger"> Annuler</button>
                             </form>
                         </c:if>
                         
                         <c:if test="${virement.statut == 11}">
                             <form action="${pageContext.request.contextPath}/virement/executer/${virement.idVirement}" method="post" style="display: inline;">
-                                <button type="submit" class="button button-success">🚀 Exécuter</button>
+                                <button type="submit" class="button button-success"> Exécuter</button>
                             </form>
                         </c:if>
                     </td>

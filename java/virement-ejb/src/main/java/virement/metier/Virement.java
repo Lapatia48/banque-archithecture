@@ -11,6 +11,7 @@ public class Virement implements Serializable {
     private String identifiantSource;
     private String identifiantDestination;
     private Double montant;
+    private Double fraisDeVirement; // Nouveau champ
     private String devise;
     private String details;
     private LocalDateTime dateCreation;
@@ -27,6 +28,7 @@ public class Virement implements Serializable {
         this.identifiantSource = identifiantSource;
         this.identifiantDestination = identifiantDestination;
         this.montant = montant;
+        this.fraisDeVirement = 0.0; // Valeur par défaut
         this.devise = devise;
         this.details = details;
         this.createdBy = createdBy;
@@ -49,6 +51,10 @@ public class Virement implements Serializable {
         }
         this.statut = 21; // EXECUTE
         this.dateExecution = LocalDateTime.now();
+        
+        // Créer le ValidationVirement associé
+        ValidationVirement.createValidationVirement(this);
+        
         return this;
     }
     
@@ -109,6 +115,9 @@ public class Virement implements Serializable {
     
     public Double getMontant() { return montant; }
     public void setMontant(Double montant) { this.montant = montant; }
+
+    public Double getFraisDeVirement() { return fraisDeVirement; }
+    public void setFraisDeVirement(Double fraisDeVirement) { this.fraisDeVirement = fraisDeVirement; }
     
     public String getDevise() { return devise; }
     public void setDevise(String devise) { this.devise = devise; }

@@ -16,4 +16,7 @@ public interface BanquierRemote {
     
     Banquier getBanquierConnecte();
     boolean estConnecte();
+
+    // pour le virement
+    boolean aRolePourAction(String nomTable, String action);
 }
