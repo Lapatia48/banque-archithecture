@@ -22,23 +22,27 @@ public class VirementBean implements VirementRemote {
     
     @Override
     public Virement creerVirement(String identifiantSource, String identifiantDestination, 
-                                Double montant, String devise, String details, String createdBy) {
+                                        Double montant, Double fraisDeVirement, 
+                                        String devise, String details, String createdBy) {
         try {
             Virement virement = new Virement(identifiantSource, identifiantDestination, montant, devise, details, createdBy);
+            virement.setFraisDeVirement(fraisDeVirement); // ✅ SET DES FRAIS
             
-            // Sauvegarder en base
-            String sql = "INSERT INTO Virements (identifiant_source, identifiant_destination, montant, devise, details, date_creation, statut, created_by) " +
-                        "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)";
+            // ✅ MODIFICATION SQL : Ajout de fraisDeVirement
+            String sql = "INSERT INTO Virements (identifiant_source, identifiant_destination, " +
+                        "montant, fraisDeVirement, devise, details, date_creation, statut, created_by) " +
+                        "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)";
             
             Query query = em.createNativeQuery(sql);
             query.setParameter(1, virement.getIdentifiantSource());
             query.setParameter(2, virement.getIdentifiantDestination());
             query.setParameter(3, virement.getMontant());
-            query.setParameter(4, virement.getDevise());
-            query.setParameter(5, virement.getDetails());
-            query.setParameter(6, Timestamp.valueOf(virement.getDateCreation()));
-            query.setParameter(7, virement.getStatut());
-            query.setParameter(8, virement.getCreatedBy());
+            query.setParameter(4, virement.getFraisDeVirement()); // ✅ FRAIS
+            query.setParameter(5, virement.getDevise());
+            query.setParameter(6, virement.getDetails());
+            query.setParameter(7, Timestamp.valueOf(virement.getDateCreation()));
+            query.setParameter(8, virement.getStatut());
+            query.setParameter(9, virement.getCreatedBy());
             query.executeUpdate();
             
             // Récupérer l'ID généré
@@ -180,6 +184,42 @@ public class VirementBean implements VirementRemote {
             return Optional.empty();
         }
     }
+
+    private List<Virement> executerRequeteVirements(String sql, Object... params) {
+        Query query = em.createNativeQuery(sql);
+        for (int i = 0; i < params.length; i++) {
+            query.setParameter(i + 1, params[i]);
+        }
+        
+        List<Object[]> results = query.getResultList();
+        List<Virement> virements = new ArrayList<>();
+        
+        for (Object[] result : results) {
+            Virement virement = new Virement();
+            virement.setIdVirement(((Number) result[0]).longValue());
+            virement.setIdentifiantSource((String) result[1]);
+            virement.setIdentifiantDestination((String) result[2]);
+            virement.setMontant(((Number) result[3]).doubleValue());            
+            if (result[4] != null) {
+                virement.setFraisDeVirement(((Number) result[4]).doubleValue());
+            } else {
+                virement.setFraisDeVirement(0.0);
+            }
+            virement.setDevise((String) result[5]); 
+            virement.setDetails((String) result[6]);
+            virement.setDateCreation(((Timestamp) result[7]).toLocalDateTime()); 
+            if (result[8] != null) {
+                virement.setDateExecution(((Timestamp) result[8]).toLocalDateTime());
+            }
+            virement.setStatut(((Number) result[9]).intValue()); 
+            virement.setMotifRefus((String) result[10]); 
+            virement.setCreatedBy((String) result[11]); 
+            
+            virements.add(virement);
+        }
+        
+        return virements;
+    }
     
     // Méthodes privées
     private void mettreAJourVirement(Virement virement) {
@@ -196,16 +236,16 @@ public class VirementBean implements VirementRemote {
         query.executeUpdate();
     }
 
-
-    public static double calculerFraisPourVirement(Virement virement, EntityManager em) {
-        if (virement == null || virement.getMontant() == null || em == null) {
+    @Override
+    public Double calculerFraisPourVirement(Double montant) {
+        if (montant == null || montant <= 0) {
             return 0.0;
         }
 
         try {
             String sql = "SELECT * FROM conf_frais WHERE ?1 BETWEEN montant_inf AND montant_sup AND type_compte = 'courant'";
             Query query = em.createNativeQuery(sql);
-            query.setParameter(1, virement.getMontant());
+            query.setParameter(1, montant);
             
             List<Object[]> results = query.getResultList();
             if (!results.isEmpty()) {
@@ -219,7 +259,7 @@ public class VirementBean implements VirementRemote {
                 confFrais.setFraisPourc(result[5] != null ? ((Number) result[5]).doubleValue() : 0.0);
                 
                 // Appel de la méthode calculerFrais de l'objet
-                return confFrais.calculerFrais(virement.getMontant());
+                return confFrais.calculerFrais(montant);
             }
             return 0.0;
         } catch (Exception e) {
@@ -232,8 +272,6 @@ public class VirementBean implements VirementRemote {
         EntityManager tempEm = emf.createEntityManager();
         EntityTransaction transaction = null;
 
-        double frais = calculerFraisPourVirement(virement, em);
-
         try{
             transaction = tempEm.getTransaction();
             transaction.begin();
@@ -241,7 +279,7 @@ public class VirementBean implements VirementRemote {
             // retrait sur source
             String retraitSql = "UPDATE Comptes SET solde = solde - ?1 WHERE identifiant = ?2 AND type_compte = 'courant'";
             Query retraitQuery = em.createNativeQuery(retraitSql);
-            retraitQuery.setParameter(1, virement.getMontant()+frais);
+            retraitQuery.setParameter(1, virement.getMontant());
             retraitQuery.setParameter(2, virement.getIdentifiantSource());
             retraitQuery.executeUpdate();
             
@@ -286,35 +324,6 @@ public class VirementBean implements VirementRemote {
         
     }
     
-    private List<Virement> executerRequeteVirements(String sql, Object... params) {
-        Query query = em.createNativeQuery(sql);
-        for (int i = 0; i < params.length; i++) {
-            query.setParameter(i + 1, params[i]);
-        }
-        
-        List<Object[]> results = query.getResultList();
-        List<Virement> virements = new ArrayList<>();
-        
-        for (Object[] result : results) {
-            Virement virement = new Virement();
-            virement.setIdVirement(((Number) result[0]).longValue());
-            virement.setIdentifiantSource((String) result[1]);
-            virement.setIdentifiantDestination((String) result[2]);
-            virement.setMontant(((Number) result[3]).doubleValue());
-            virement.setDevise((String) result[4]);
-            virement.setDetails((String) result[5]);
-            virement.setDateCreation(((Timestamp) result[6]).toLocalDateTime());
-            if (result[7] != null) {
-                virement.setDateExecution(((Timestamp) result[7]).toLocalDateTime());
-            }
-            virement.setStatut(((Number) result[8]).intValue());
-            virement.setMotifRefus((String) result[9]);
-            virement.setCreatedBy((String) result[10]);
-            virements.add(virement);
-        }
-        
-        return virements;
-    }
 
     @Override
     public ValidationVirement creerValidationVirement(Virement virement) {

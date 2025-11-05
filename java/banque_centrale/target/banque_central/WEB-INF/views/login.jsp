@@ -39,12 +39,7 @@
                 <input type="submit" value="Se connecter">
             </form>
         </div>
-        <p>${erreur}</p>
-
-        <div>
-            <h6>Voir banquier connectee</h6>
-            <a href="${pageContext.request.contextPath}/getBanquieer">Voir le banquier</a>
-        </div>
+        <p style="color: red;">${erreur}</p>
     </div>
 </body>
 </html>

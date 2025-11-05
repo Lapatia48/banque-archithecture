@@ -91,6 +91,7 @@ CREATE TABLE Virements (
     identifiant_source VARCHAR(50) NOT NULL REFERENCES Utilisateurs(identifiant),
     identifiant_destination VARCHAR(50) NOT NULL REFERENCES Utilisateurs(identifiant),
     montant NUMERIC(15,2) NOT NULL,
+    fraisDeVirement NUMERIC(15,2) DEFAULT 0,
     devise VARCHAR(10) DEFAULT 'MGA',
     details VARCHAR(255),
     date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

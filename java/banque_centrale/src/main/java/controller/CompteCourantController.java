@@ -398,18 +398,30 @@ public class CompteCourantController {
 
             Double montantEnAriary;
             String sourceConversion;
+            Double fraisAriary = 0.0;
             
             // ✅ DÉTECTER automatiquement si c'est une devise EJB ou WebService
             List<String> devisesEjb = changeSessionService.getDevisesDisponibles();
+            VirementRemote virementEjb = getVirementEJB();
             
             if (devisesEjb.contains(devise)) {
                 // Conversion via EJB
                 montantEnAriary = changeSessionService.convertirVersAriary(devise, montant);
                 sourceConversion = "EJB";
+
+                // conversion des frais
+                Double frais = virementEjb.calculerFraisPourVirement(montantEnAriary);
+                fraisAriary = changeSessionService.convertirVersAriary(devise, frais);
+
             } else {
                 // Conversion via WebService
                 montantEnAriary = convertirViaWebService(devise, montant);
                 sourceConversion = "WS";
+
+                // convesion des frais
+                Double frais = virementEjb.calculerFraisPourVirement(montantEnAriary);
+                fraisAriary = convertirViaWebService(devise, frais);
+
             }
 
             // Vérifier solde (en MGA) - On garde cette vérification
@@ -421,15 +433,15 @@ public class CompteCourantController {
 
             // ✅ NOUVEAU : Créer le virement via l'EJB Virement au lieu d'exécuter immédiatement
             String createdBy = banquierSessionService.getBanquier().getIdentifiant();
-            VirementRemote virementEjb = getVirementEJB();
             
             virement.metier.Virement virement = virementEjb.creerVirement(
                 identifiantSource, 
                 identifiantDest, 
-                montantEnAriary, 
+                montantEnAriary,
+                fraisAriary, // ✅ FRAIS CALCULÉ
                 "MGA", // Toujours stocker en MGA
                 "Virement (" + sourceConversion + ") de " + montant + " " + devise + 
-                " (converti en " + montantEnAriary + " MGA) par " + createdBy + 
+                " (converti en " + montantEnAriary + " MGA, frais: " + fraisAriary + " MGA) par " + createdBy + 
                 (details != null ? ": " + details : ""),
                 createdBy
             );

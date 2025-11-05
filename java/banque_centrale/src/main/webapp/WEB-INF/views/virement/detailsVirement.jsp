@@ -52,6 +52,9 @@
             <strong>Montant:</strong> ${virement.montant} ${virement.devise}
         </div>
         <div class="detail-item">
+            <strong>Frais:</strong> ${virement.fraisDeVirement}
+        </div>
+        <div class="detail-item">
             <strong>Détails:</strong> ${virement.details}
         </div>
         <div class="detail-item">

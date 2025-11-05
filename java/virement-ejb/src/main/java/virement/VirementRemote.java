@@ -8,8 +8,7 @@ import java.util.Optional;
 
 @Remote
 public interface VirementRemote {
-    Virement creerVirement(String identifiantSource, String identifiantDestination, 
-                          Double montant, String devise, String details, String createdBy);
+    Virement creerVirement(String identifiantSource, String identifiantDestination, Double montant, Double frais, String devise, String details, String createdBy);
     Virement validerVirement(Long idVirement);
     Virement executerVirement(Long idVirement);
     Virement annulerVirement(Long idVirement, String motif);
@@ -19,6 +18,7 @@ public interface VirementRemote {
     List<Virement> getTousVirements();
     Optional<Virement> getVirementById(Long idVirement);
 
+    Double calculerFraisPourVirement(Double montant);
     // Nouvelles méthodes pour ValidationVirement
     ValidationVirement creerValidationVirement(Virement virement);
     List<ValidationVirement> getValidationsByVirement(Long idVirement);
