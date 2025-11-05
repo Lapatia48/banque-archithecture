@@ -73,6 +73,10 @@ public class VirementController {
                 model.addAttribute("erreur", "Banquier non connecté");
                 return "redirect:/login";
             }
+            if (!banquierSessionService.aRolePourAction("courant", "validerVirement")) {
+                model.addAttribute("error", "Rôle insuffisant pour valider un virement");
+                return listVirements(session, model);
+            }
             
             VirementRemote ejb = getVirementEJB();
             Virement virement = ejb.validerVirement(idVirement);
@@ -111,19 +115,16 @@ public class VirementController {
         return "virement/detailsVirement";
     }
 
-    // Méthode pour récupérer les données du virement sans objet complexe
-    private Map<String, Object> getVirementData(Long idVirement) {
-        // Implémentation directe en JDBC ou via une méthode simplifiée
-        // Pour l'instant, retournons null et gérons l'erreur
-        return null;
-    }
-
     @PostMapping("/executer/{id}")
     public String executerVirement(@PathVariable("id") Long idVirement, HttpSession session, Model model) {
         try {
             if (!banquierSessionService.estConnecte()) {
                 model.addAttribute("erreur", "Banquier non connecté");
                 return "redirect:/login";
+            }
+            if (!banquierSessionService.aRolePourAction("courant", "executerVirement")) {
+                model.addAttribute("error", "Rôle insuffisant pour executer un virement");
+                return listVirements(session, model);
             }
             
             VirementRemote ejb = getVirementEJB();
@@ -211,6 +212,10 @@ public class VirementController {
                 model.addAttribute("erreur", "Banquier non connecté");
                 return "redirect:/login";
             }
+            if (!banquierSessionService.aRolePourAction("courant", "annulerVirement")) {
+                model.addAttribute("error", "Rôle insuffisant pour annuler un virement");
+                return listVirements(session, model);
+            }
             
             VirementRemote ejb = getVirementEJB();
             Virement virement = ejb.annulerVirement(idVirement, motif);
@@ -232,6 +237,10 @@ public class VirementController {
             if (!banquierSessionService.estConnecte()) {
                 model.addAttribute("erreur", "Banquier non connecté");
                 return "redirect:/login";
+            }
+            if (!banquierSessionService.aRolePourAction("courant", "refuserVirement")) {
+                model.addAttribute("error", "Rôle insuffisant pour refuser un virement");
+                return listVirements(session, model);
             }
             
             VirementRemote ejb = getVirementEJB();
@@ -278,6 +287,10 @@ public class VirementController {
             if (!banquierSessionService.estConnecte()) {
                 model.addAttribute("erreur", "Banquier non connecté");
                 return "redirect:/login";
+            }
+            if (!banquierSessionService.aRolePourAction("courant", "rollbackVirement")) {
+                model.addAttribute("error", "Rôle insuffisant pour roollback un virement");
+                return listVirements(session, model);
             }
             
             VirementRemote ejb = getVirementEJB();

@@ -387,8 +387,7 @@ public class CompteCourantController {
             HttpSession session, Model model) {
         
         try {
-            if (!verifierSecurite(session, model, "courant") || 
-                !banquierSessionService.aRole("courant", ((Utilisateur) session.getAttribute("utilisateur")).getIdentifiant())) {
+            if (!banquierSessionService.aRolePourAction("courant", "creerVirement")) {
                 model.addAttribute("error", "Rôle insuffisant pour effectuer un virement");
                 return compteCourant(session, model);
             }

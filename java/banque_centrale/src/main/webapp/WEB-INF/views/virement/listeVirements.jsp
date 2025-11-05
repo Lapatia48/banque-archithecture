@@ -161,12 +161,6 @@
                                 <button type="submit" class="button button-success"> Exécuter</button>
                             </form>
                         </c:if>
-                        <c:if test="${virement.statut == 21}">
-                            <form action="${pageContext.request.contextPath}/virement/annuler-execution/${virement.idVirement}" method="post" style="display: inline;">
-                                <input type="hidden" name="motif" value="Rollback">
-                                <button type="submit" class="button button-success"> Rollback</button>
-                            </form>
-                        </c:if>
                     </td>
                 </tr>
             </c:forEach>

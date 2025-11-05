@@ -164,6 +164,38 @@ public class BanquierBean implements BanquierRemote, Serializable {
     }
     
 
+    @Override
+    public boolean aRolePourAction(String nomTable, String action) {
+        if (!estConnecte()) {
+            return false;
+        }
+        
+        try {
+            String sql = "SELECT ar.role_necessaire FROM ActionRole ar " +
+                        "WHERE ar.nom_table = ?1 AND ar.action = ?2";
+            
+            Query query = em.createNativeQuery(sql);
+            query.setParameter(1, nomTable.toLowerCase());
+            query.setParameter(2, action);
+            
+            @SuppressWarnings("unchecked")
+            List<Integer> roles = query.getResultList();
+            
+            if (roles.isEmpty()) {
+                return true; // Pas de restriction = accès autorisé
+            }
+            
+            int roleNecessaire = roles.get(0);
+            int roleBanquier = banquierConnecte.getRole();
+            
+            return roleBanquier >= roleNecessaire;
+            
+        } catch (Exception e) {
+            System.out.println("Erreur vérification rôle pour action: " + e.getMessage());
+            return false;
+        }
+    }
+
     //code utilistaire
 
     public String getEtatSession() {

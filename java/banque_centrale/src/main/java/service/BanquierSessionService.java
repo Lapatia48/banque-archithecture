@@ -72,6 +72,13 @@ public class BanquierSessionService {
         return banquierEjb.aRole(typeCompte, identifiantClient);
     }
     
+    public boolean aRolePourAction(String typeCompte, String action){
+        if (!estConnecte()) {
+            return false;
+        }
+        return banquierEjb.aRolePourAction(typeCompte, action);
+    }
+
     private BanquierRemote lookupBanquierEjb() {
         try {
             Properties props = new Properties();

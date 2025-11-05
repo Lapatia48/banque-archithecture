@@ -18,10 +18,10 @@
 -- Utilisateur
 -- =====================
 INSERT INTO Utilisateurs (nom, mot_de_passe, identifiant)
-VALUES ('Lapatia', '1234', 'laplap');
+VALUES ('CL001', '1234', 'laplap');
 
 INSERT INTO Utilisateurs (nom, mot_de_passe, identifiant)
-VALUES ('Erica', '1234', 'rixrix');
+VALUES ('CL002', '1234', 'rixrix');
 
 -- =====================
 -- Types de comptes
@@ -53,11 +53,14 @@ INSERT INTO Comptes (identifiant, type_compte, libelle, solde, niveau) VALUES
 ('laplap', 'depot',   'Compte Depot de Lapatia', 0, 30),
 ('laplap', 'pret',    'Compte Pret de Lapatia', 0, 40);
 
+update comptes set limite_journaliere=50000 where identifiant='laplap' and type_compte='courant';
+
 INSERT INTO Comptes (identifiant, type_compte, libelle, solde, niveau) VALUES
 ('rixrix', 'courant', 'Compte Courant de Erica', 0, 20),
 ('rixrix', 'depot',   'Compte Depot de Erica', 0, 30),
 ('rixrix', 'pret',    'Compte Pret de Erica', 0, 40);
 
+update comptes set limite_journaliere=50000 where identifiant='rixrix' and type_compte='courant';
 
 -- Insertion des données initiales pour les prêts
 INSERT INTO Pourcentage (type_compte, pourcentage, periode) VALUES
@@ -74,14 +77,17 @@ INSERT INTO Pourcentage (type_compte, pourcentage, periode) VALUES
 -- Insertion des directions
 INSERT INTO Direction (libelle, niveau) VALUES 
 ('Direction Générale', 30),
+('Test', 50),
 ('Direction Régionale', 25),
 ('Agence Locale', 10);
 
 -- Insertion d'un administrateur
 INSERT INTO Utilisateur_Banquier (identifiant, nom, mot_de_passe, id_direction, role) 
-VALUES ('admin', 'Administrateur Principal', 'admin123', 1, 4),
-('manager', 'Manager Region 1', 'mdp123', 2, 2),
-('agent', 'Agent Agence 1', 'mdp123', 3, 1);
+VALUES 
+('admin', 'Administrateur Principal', 'admin123', 1, 5),
+('test', 'test1', 'admin123', 2, 10),
+('manager', 'Manager Region 1', 'admin123', 3, 2),
+('agent', 'Agent Agence 1', 'admin123', 4, 1);
 
 -- Définition des permissions pour le compte courant
 INSERT INTO ActionRole (nom_table, action, role_necessaire) VALUES 
@@ -90,16 +96,15 @@ INSERT INTO ActionRole (nom_table, action, role_necessaire) VALUES
 ('courant', 'virement', 3),
 ('courant', 'consultation', 3);
 
-
-
-
 -- Mettre à jour les permissions pour les virements
 INSERT INTO ActionRole (nom_table, action, role_necessaire) VALUES 
-('virement', 'creer', 3),
-('virement', 'valider', 2),
-('virement', 'executer', 2),
-('virement', 'annuler', 2),
-('virement', 'refuser', 2);
+('courant', 'creerVirement', 4),
+('courant', 'validerVirement', 4),
+('courant', 'executerVirement', 9),
+('courant', 'annulerVirement', 9),
+('courant', 'refuserVirement', 9),
+('courant', 'rollbackVirement', 9);
+
 
 -- Données d'exemple pour le compte courant
 INSERT INTO conf_frais (type_compte, montant_inf, montant_sup, frais_forf, frais_pourc) VALUES 
