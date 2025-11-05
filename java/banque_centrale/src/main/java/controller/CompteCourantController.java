@@ -378,7 +378,7 @@ public class CompteCourantController {
         return compteCourant(session, model);
     }
 
-   @PostMapping("/virement-courant")
+    @PostMapping("/virement-courant")
     public String creerVirementCourant(
             @RequestParam("identifiantDest") String identifiantDest,
             @RequestParam("montant") Double montant,
@@ -409,18 +409,16 @@ public class CompteCourantController {
                 montantEnAriary = changeSessionService.convertirVersAriary(devise, montant);
                 sourceConversion = "EJB";
 
-                // conversion des frais
-                Double frais = virementEjb.calculerFraisPourVirement(montantEnAriary);
-                fraisAriary = changeSessionService.convertirVersAriary(devise, frais);
+                // frais pour montant en ariary
+                fraisAriary = virementEjb.calculerFraisPourVirement(montantEnAriary);
 
             } else {
                 // Conversion via WebService
                 montantEnAriary = convertirViaWebService(devise, montant);
                 sourceConversion = "WS";
 
-                // convesion des frais
-                Double frais = virementEjb.calculerFraisPourVirement(montantEnAriary);
-                fraisAriary = convertirViaWebService(devise, frais);
+                // frais pour montant en ariary
+                fraisAriary = virementEjb.calculerFraisPourVirement(montantEnAriary);
 
             }
 

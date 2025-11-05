@@ -66,36 +66,6 @@ public class VirementController {
         return "virement/listeVirements";
     }
 
-    // @PostMapping("/creer")
-    // public String creerVirement(
-    //         @RequestParam("identifiantSource") String identifiantSource,
-    //         @RequestParam("identifiantDest") String identifiantDest,
-    //         @RequestParam("montant") Double montant,
-    //         @RequestParam("devise") String devise,
-    //         @RequestParam(value = "details", required = false) String details,
-    //         HttpSession session, Model model) {
-        
-    //     try {
-    //         if (!banquierSessionService.estConnecte()) {
-    //             model.addAttribute("erreur", "Banquier non connecté");
-    //             return "redirect:/login";
-    //         }
-            
-    //         String createdBy = banquierSessionService.getBanquier().getIdentifiant();
-    //         VirementRemote ejb = getVirementEJB();
-            
-    //         Virement virement = ejb.creerVirement(identifiantSource, identifiantDest, montant, devise, details, createdBy);
-            
-    //         model.addAttribute("message", "Virement créé avec succès (ID: " + virement.getIdVirement() + ")");
-    //         model.addAttribute("virement", virement);
-            
-    //     } catch (Exception e) {
-    //         model.addAttribute("error", "Erreur création virement: " + e.getMessage());
-    //     }
-        
-    //     return listVirements(session, model);
-    // }
-
     @PostMapping("/valider/{id}")
     public String validerVirement(@PathVariable("id") Long idVirement, HttpSession session, Model model) {
         try {

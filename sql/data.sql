@@ -98,8 +98,7 @@ INSERT INTO ActionRole (nom_table, action, role_necessaire) VALUES
 
 -- Données d'exemple pour le compte courant
 INSERT INTO conf_frais (type_compte, montant_inf, montant_sup, frais_forf, frais_pourc) VALUES 
-('courant', 0, 100000, 1000, 0),
-('courant', 100001, 500000, 2000, 0.5),
-('courant', 500001, 1000000, 3000, 0.3),
-('courant', 1000001, 5000000, 5000, 0.2),
-('courant', 5000001, 10000000, 10000, 0.1);
+('courant', 0, 1000, 100, 0),
+('courant', 1001, 5000, 200, 1.0),
+('courant', 5001, 100000, 300, 2.0),
+('courant', 10001, 999999, 1000, 3.0);
