@@ -38,6 +38,13 @@ INSERT INTO type_operation (type_operation) VALUES
 ('remboursement'),
 ('virement');
 
+-- Ajouter un type d'opération pour les virements validés
+INSERT INTO type_operation (type_operation) VALUES 
+('virement_valide');
+-- rollback
+INSERT INTO type_operation (type_operation) VALUES 
+('rollback_virement');
+
 -- =====================
 -- Comptes de Lapatia
 -- =====================
@@ -84,9 +91,7 @@ INSERT INTO ActionRole (nom_table, action, role_necessaire) VALUES
 ('courant', 'consultation', 3);
 
 
--- Ajouter un type d'opération pour les virements validés
-INSERT INTO type_operation (type_operation) VALUES 
-('virement_valide');
+
 
 -- Mettre à jour les permissions pour les virements
 INSERT INTO ActionRole (nom_table, action, role_necessaire) VALUES 

@@ -155,6 +155,92 @@ public class VirementBean implements VirementRemote {
             throw new RuntimeException("Erreur modification virement: " + e.getMessage());
         }
     }
+
+    @Override
+    public Virement annulerExecutionVirement(Long idVirement, String motif) {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("virement");
+        EntityManager tempEm = emf.createEntityManager();
+        EntityTransaction transaction = null;
+
+        try {
+            transaction = tempEm.getTransaction();
+            transaction.begin();
+
+            // 1. Récupérer le virement
+            Virement virement = getVirementById(idVirement)
+                .orElseThrow(() -> new RuntimeException("Virement non trouvé"));
+
+            // 2. Vérifier que le virement est bien exécuté (statut 21)
+            if (!Integer.valueOf(21).equals(virement.getStatut())) {
+                throw new IllegalStateException("Seuls les virements exécutés peuvent être annulés");
+            }
+
+            // 3. ANNULATION DES OPÉRATIONS COMPTABLES (ROLLBACK MANUEL)
+            
+            //  Rembourser le montant + frais à la source
+            String remboursementSql = "UPDATE Comptes SET solde = solde + ?1 WHERE identifiant = ?2 AND type_compte = 'courant'";
+            Query remboursementQuery = tempEm.createNativeQuery(remboursementSql);
+            remboursementQuery.setParameter(1, virement.getMontant() + virement.getFraisDeVirement());
+            remboursementQuery.setParameter(2, virement.getIdentifiantSource());
+            remboursementQuery.executeUpdate();
+
+            //  Reprendre le montant au destinataire
+            String repriseSql = "UPDATE Comptes SET solde = solde - ?1 WHERE identifiant = ?2 AND type_compte = 'courant'";
+            Query repriseQuery = tempEm.createNativeQuery(repriseSql);
+            repriseQuery.setParameter(1, virement.getMontant());
+            repriseQuery.setParameter(2, virement.getIdentifiantDestination());
+            repriseQuery.executeUpdate();
+
+            // 4. Enregistrer les opérations d'annulation
+            String operationSql = "INSERT INTO Operations (identifiant, compte, type_operation, montant, details, date_operation) " +
+                                "VALUES (?1, 'courant', ?2, ?3, ?4, ?5)";
+
+            //  Opération de remboursement source
+            Query opRemboursement = tempEm.createNativeQuery(operationSql);
+            opRemboursement.setParameter(1, virement.getIdentifiantSource());
+            opRemboursement.setParameter(2, "rollback_virement");
+            opRemboursement.setParameter(3, virement.getMontant() + virement.getFraisDeVirement());
+            opRemboursement.setParameter(4, "Annulation virement #" + idVirement + " - Remboursement: " + motif);
+            opRemboursement.setParameter(5, Timestamp.valueOf(LocalDateTime.now()));
+            opRemboursement.executeUpdate();
+
+            //  Opération de reprise destination
+            Query opReprise = tempEm.createNativeQuery(operationSql);
+            opReprise.setParameter(1, virement.getIdentifiantDestination());
+            opReprise.setParameter(2, "rollback_virement");
+            opReprise.setParameter(3, -virement.getMontant());
+            opReprise.setParameter(4, "Annulation virement #" + idVirement + " - Reprise montant: " + motif);
+            opReprise.setParameter(5, Timestamp.valueOf(LocalDateTime.now()));
+            opReprise.executeUpdate();
+
+            // 5. Mettre à jour le statut du virement
+            virement.setStatut(0); // ANNULE
+            virement.setMotifRefus("Annulation après exécution: " + motif);
+            virement.setDateExecution(null); // On pourrait garder la date ou la supprimer
+            
+            mettreAJourVirement(virement);
+
+            // 6. Supprimer la validation virement associée
+            String deleteValidationSql = "DELETE FROM ValidationVirement WHERE id_objet = ?1";
+            Query deleteValidationQuery = tempEm.createNativeQuery(deleteValidationSql);
+            deleteValidationQuery.setParameter(1, idVirement);
+            deleteValidationQuery.executeUpdate();
+
+            transaction.commit();
+            
+            System.out.println(" Virement #" + idVirement + " annulé avec succès - Rollback manuel effectué");
+            return virement;
+
+        } catch (Exception e) {
+            if (transaction != null && transaction.isActive()) {
+                transaction.rollback();
+            }
+            throw new RuntimeException("Erreur annulation exécution virement: " + e.getMessage(), e);
+        } finally {
+            tempEm.close();
+            emf.close();
+        }
+    }
     
     @Override
     public List<Virement> getVirementsEnAttente() {

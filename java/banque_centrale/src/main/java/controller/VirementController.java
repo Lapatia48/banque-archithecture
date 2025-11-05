@@ -268,4 +268,29 @@ public class VirementController {
         
         return listVirements(session, model);
     }
+
+
+    @PostMapping("/annuler-execution/{id}")
+    public String annulerExecutionVirement(@PathVariable("id") Long idVirement,
+                                        @RequestParam("motif") String motif,
+                                        HttpSession session, Model model) {
+        try {
+            if (!banquierSessionService.estConnecte()) {
+                model.addAttribute("erreur", "Banquier non connecté");
+                return "redirect:/login";
+            }
+            
+            VirementRemote ejb = getVirementEJB();
+            Virement virement = ejb.annulerExecutionVirement(idVirement, motif);
+            
+            model.addAttribute("message", 
+                "Virement #" + virement.getIdVirement() + " annulé avec succès après exécution. " +
+                "Montant remboursé: " + (virement.getMontant() + virement.getFraisDeVirement()) + " MGA");
+            
+        } catch (Exception e) {
+            model.addAttribute("error", "Erreur annulation exécution: " + e.getMessage());
+        }
+        
+        return listVirements(session, model);
+    }
 }

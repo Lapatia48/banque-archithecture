@@ -21,6 +21,8 @@ public interface VirementRemote {
     List<Virement> getTousVirements();
     Optional<Virement> getVirementById(Long idVirement);
 
+    Virement annulerExecutionVirement(Long idVirement, String motif);
+
     Double calculerFraisPourVirement(Double montant);
     // Nouvelles méthodes pour ValidationVirement
     ValidationVirement creerValidationVirement(Virement virement);
