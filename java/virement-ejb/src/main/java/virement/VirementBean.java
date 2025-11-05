@@ -398,4 +398,56 @@ public class VirementBean implements VirementRemote {
         
         return validations;
     }
+
+    @Override
+    public Double getSommeVirementsParDate(String identifiant, LocalDateTime date) {
+        try {
+            // Convertir LocalDateTime en Date SQL pour la comparaison
+            java.sql.Date sqlDate = java.sql.Date.valueOf(date.toLocalDate());
+            
+            String sql = "SELECT COALESCE(SUM(montant), 0) FROM Virements " +
+                        "WHERE (identifiant_source = ?1 OR identifiant_destination = ?1) " +
+                        "AND date_execution::date = ?2 " +
+                        "AND statut = 21"; // Seulement les virements exécutés
+            
+            Query query = em.createNativeQuery(sql);
+            query.setParameter(1, identifiant);
+            query.setParameter(2, sqlDate);
+            
+            Object result = query.getSingleResult();
+            return result != null ? ((Number) result).doubleValue() : 0.0;
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur récupération somme virements: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Boolean verifierLimiteJournaliere(Long idVirement) {
+        try {
+            Virement virement = getVirementById(idVirement)
+                .orElseThrow(() -> new RuntimeException("Virement non trouvé"));
+            
+            String identifiantSource = virement.getIdentifiantSource();
+            Double montantVirement = virement.getMontant();
+            
+            // Récupérer la somme des virements aujourd'hui
+            Double sommeVirementsAujourdhui = getSommeVirementsParDate(identifiantSource, LocalDateTime.now());
+            
+            // Récupérer la limite journalière
+            String sqlLimite = "SELECT limite_journaliere FROM Comptes WHERE identifiant = ?1 AND type_compte = 'courant'";
+            Query queryLimite = em.createNativeQuery(sqlLimite);
+            queryLimite.setParameter(1, identifiantSource);
+            
+            Object resultLimite = queryLimite.getSingleResult();
+            Double limiteJournaliere = resultLimite != null ? ((Number) resultLimite).doubleValue() : 0.0;
+            
+            // Vérifier la limite
+            return (limiteJournaliere == 0) || ((sommeVirementsAujourdhui + montantVirement) <= limiteJournaliere);
+            
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
 }

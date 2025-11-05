@@ -27,8 +27,11 @@ CREATE TABLE Comptes (
     type_compte VARCHAR(50) NOT NULL REFERENCES type_comptes(type_compte),
     libelle VARCHAR(50),
     solde NUMERIC(15,2) DEFAULT 0,
-    niveau INT
+    niveau INT,
+    limite_journaliere NUMERIC(15,2) DEFAULT 0
 );
+
+-- ALTER TABLE Comptes ADD COLUMN limite_journaliere NUMERIC(15,2) DEFAULT 0;
 
 CREATE TABLE type_operation(
     type_operation VARCHAR(50) PRIMARY KEY

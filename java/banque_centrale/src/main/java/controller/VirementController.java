@@ -127,8 +127,15 @@ public class VirementController {
             }
             
             VirementRemote ejb = getVirementEJB();
-            Virement virement = ejb.executerVirement(idVirement);
             
+            // ✅ VÉRIFICATION LIMITE JOURNALIÈRE (version centralisée)
+            if (!ejb.verifierLimiteJournaliere(idVirement)) {
+                model.addAttribute("error", "Limite journalière de virement dépassée!");
+                return listVirements(session, model);
+            }
+            
+            // ✅ EXÉCUTER le virement
+            Virement virement = ejb.executerVirement(idVirement);
             model.addAttribute("message", "Virement #" + virement.getIdVirement() + " exécuté avec succès");
             
         } catch (Exception e) {

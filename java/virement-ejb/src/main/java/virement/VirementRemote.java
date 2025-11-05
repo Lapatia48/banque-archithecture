@@ -3,6 +3,8 @@ package virement;
 import virement.metier.ValidationVirement;
 import virement.metier.Virement;
 import jakarta.ejb.Remote;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,4 +25,8 @@ public interface VirementRemote {
     ValidationVirement creerValidationVirement(Virement virement);
     List<ValidationVirement> getValidationsByVirement(Long idVirement);
     List<ValidationVirement> getValidationsByUtilisateur(String utilisateur);
+
+    // limite journaliere
+    Double getSommeVirementsParDate(String identifiant, LocalDateTime date);
+    Boolean verifierLimiteJournaliere(Long idVirement);
 }
