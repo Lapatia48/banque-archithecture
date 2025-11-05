@@ -28,9 +28,9 @@ public class VirementBean implements VirementRemote {
                                         String devise, String details, String createdBy) {
         try {
             Virement virement = new Virement(identifiantSource, identifiantDestination, montant, devise, details, createdBy);
-            virement.setFraisDeVirement(fraisDeVirement); // ✅ SET DES FRAIS
+            virement.setFraisDeVirement(fraisDeVirement); //  SET DES FRAIS
             
-            // ✅ MODIFICATION SQL : Ajout de fraisDeVirement
+            //  MODIFICATION SQL : Ajout de fraisDeVirement
             String sql = "INSERT INTO Virements (identifiant_source, identifiant_destination, " +
                         "montant, fraisDeVirement, devise, details, date_creation, statut, created_by) " +
                         "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)";
@@ -39,7 +39,7 @@ public class VirementBean implements VirementRemote {
             query.setParameter(1, virement.getIdentifiantSource());
             query.setParameter(2, virement.getIdentifiantDestination());
             query.setParameter(3, virement.getMontant());
-            query.setParameter(4, virement.getFraisDeVirement()); // ✅ FRAIS
+            query.setParameter(4, virement.getFraisDeVirement()); //  FRAIS
             query.setParameter(5, virement.getDevise());
             query.setParameter(6, virement.getDetails());
             query.setParameter(7, Timestamp.valueOf(virement.getDateCreation()));
@@ -454,7 +454,15 @@ public class VirementBean implements VirementRemote {
             
             // Calculer le total après virement
             Double totalApresVirement = sommeVirementsAujourdhui + montantVirement;
-            Boolean limiteRespectee = (limiteJournaliere == 0) || (totalApresVirement <= limiteJournaliere);
+            
+            //  MODIFICATION : Vérifier si limite > 0 ET si le total dépasse la limite
+            Boolean limiteRespectee;
+            if (limiteJournaliere > 0) {
+                limiteRespectee = (totalApresVirement <= limiteJournaliere);
+            } else {
+                // Si limite ≤ 0, c'est illimité
+                limiteRespectee = true;
+            }
             
             // Remplir le résultat avec tous les détails
             resultat.put("limiteRespectee", limiteRespectee);
