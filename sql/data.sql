@@ -53,14 +53,14 @@ INSERT INTO Comptes (identifiant, type_compte, libelle, solde, niveau) VALUES
 ('laplap', 'depot',   'Compte Depot de Lapatia', 0, 30),
 ('laplap', 'pret',    'Compte Pret de Lapatia', 0, 40);
 
-update comptes set limite_journaliere=50000 where identifiant='laplap' and type_compte='courant';
+update comptes set limite_journaliere=2500000 where identifiant='laplap' and type_compte='courant';
 
 INSERT INTO Comptes (identifiant, type_compte, libelle, solde, niveau) VALUES
 ('rixrix', 'courant', 'Compte Courant de Erica', 0, 20),
 ('rixrix', 'depot',   'Compte Depot de Erica', 0, 30),
 ('rixrix', 'pret',    'Compte Pret de Erica', 0, 40);
 
-update comptes set limite_journaliere=50000 where identifiant='rixrix' and type_compte='courant';
+update comptes set limite_journaliere=2500000 where identifiant='rixrix' and type_compte='courant';
 
 -- Insertion des données initiales pour les prêts
 INSERT INTO Pourcentage (type_compte, pourcentage, periode) VALUES
@@ -108,7 +108,5 @@ INSERT INTO ActionRole (nom_table, action, role_necessaire) VALUES
 
 -- Données d'exemple pour le compte courant
 INSERT INTO conf_frais (type_compte, montant_inf, montant_sup, frais_forf, frais_pourc) VALUES 
-('courant', 0, 1000, 100, 0),
-('courant', 1001, 5000, 200, 1.0),
-('courant', 5001, 100000, 300, 2.0),
-('courant', 10001, 999999, 1000, 3.0);
+('courant', 0, 500000, 20000, 5.0),
+('courant', 500001, 2000000, 50000, 3.0);

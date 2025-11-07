@@ -367,14 +367,14 @@ public class VirementBean implements VirementRemote {
             // retrait sur source
             String retraitSql = "UPDATE Comptes SET solde = solde - ?1 WHERE identifiant = ?2 AND type_compte = 'courant'";
             Query retraitQuery = em.createNativeQuery(retraitSql);
-            retraitQuery.setParameter(1, virement.getMontant()+virement.getFraisDeVirement());
+            retraitQuery.setParameter(1, virement.getMontant());
             retraitQuery.setParameter(2, virement.getIdentifiantSource());
             retraitQuery.executeUpdate();
             
             // Dépôt sur le compte destination
             String depotSql = "UPDATE Comptes SET solde = solde + ?1 WHERE identifiant = ?2 AND type_compte = 'courant'";
             Query depotQuery = em.createNativeQuery(depotSql);
-            depotQuery.setParameter(1, virement.getMontant());
+            depotQuery.setParameter(1, virement.getMontant()-virement.getFraisDeVirement());
             depotQuery.setParameter(2, virement.getIdentifiantDestination());
             depotQuery.executeUpdate();
             

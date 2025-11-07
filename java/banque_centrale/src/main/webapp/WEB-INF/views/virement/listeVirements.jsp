@@ -123,6 +123,7 @@
                 <th>Destination</th>
                 <th>Montant</th>
                 <th>Frais</th>
+                <th><b>Pour virer sans perte</b></th>
                 <th>Statut</th>
                 <th>Date création</th>
                 <th>Actions</th>
@@ -138,6 +139,7 @@
                     <td>${virement.identifiantDestination}</td>
                     <td>${virement.montant} ${virement.devise}</td>
                     <td>${virement.fraisDeVirement}</td>
+                    <td>${virement.montant + virement.fraisDeVirement} ${virement.devise}</td>
                     <td>${virement.statutToText()}</td>
                     <td>${virement.dateCreation}</td>
                     <td class="actions">
